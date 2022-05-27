@@ -6,15 +6,16 @@ import (
 	"pokersolver/pkg/node"
 )
 
+var cameOnBuildFromNode int = 0
+
 func buildFromNode(tree *Tree, n *node.Node) {
+	cameOnBuildFromNode++
+
 	for _, action := range n.Actions {
-		fmt.Println(action)
-		building := true
 		rangeToAdd := make([][]string, 0)
 		betsToAdd := make([]int, 0)
 		raisesToAdd := make([]int, 0)
 		newPlayerTurn := ""
-		newNodeToAdd := node.Node{}
 
 		if n.PlayersTurn == "oop" {
 			rangeToAdd = tree.IpRange
@@ -33,10 +34,133 @@ func buildFromNode(tree *Tree, n *node.Node) {
 		// Building according to action
 
 		// Base case : maximum raises are reached
-		fmt.Println("action : ", action)
+		if action > 1000 && n.RaiseLevel == constants.MaxRaises {
+			var raiseValue int = (action * n.CurrentFacingBet) / 1000 
+			threashold := int(constants.Threashold * float32(n.EffectiveSize))
+			if raiseValue > threashold {
+				raiseValue = n.EffectiveSize
+			}
+
+				newNode := node.NewNode(
+					rangeToAdd,
+					betsToAdd,
+					raisesToAdd,
+					n.RaiseLevel +1,
+					n.PotSize + raiseValue,
+					n.EffectiveSize - raiseValue,
+					raiseValue,
+					newPlayerTurn,
+					"fc",
+				)
+
+				n.PostActionNodes[action] = &newNode
+		} else if action == 0 || action == -2 || action == -3 {
+			// Another base case : closing actions : fold, call, check back
+
+			// We don't add any more node !
+		} else if action == -1 {
+			// Open check
+			newNode := node.NewNode(
+				rangeToAdd,
+				betsToAdd,
+				raisesToAdd,
+				n.RaiseLevel,
+				n.PotSize,
+				n.EffectiveSize,
+				0,
+				newPlayerTurn,
+				"xbb",
+			)
+
+			n.PostActionNodes[action] = &newNode
+			buildFromNode(tree, &newNode)
+		} else if action > 0 && action < 1000 {
+			// We bet !
+			betValue := (action * n.PotSize) / 100
+
+			if betValue >= n.EffectiveSize {
+				// Can't bet more than what we have, right !
+				// Therefore it's an all in situation
+
+				bet := (n.PotSize / n.EffectiveSize) * 100
+				newNode := node.NewNode(
+					rangeToAdd,
+					betsToAdd,
+					raisesToAdd,
+					n.RaiseLevel + 1,
+					n.PotSize + bet,
+					n.EffectiveSize - bet,
+					bet,
+					newPlayerTurn,
+					"fc",
+				)
+
+				n.PostActionNodes[action] = &newNode
+			} else {
+				// Just raising, not all in
+
+				newNode := node.NewNode(
+					rangeToAdd,
+					betsToAdd,
+					raisesToAdd,
+					n.RaiseLevel + 1,
+					n.PotSize + betValue,
+					n.EffectiveSize - betValue,
+					betValue,
+					newPlayerTurn,
+					"fcr",
+				)
+
+				n.PostActionNodes[action] = &newNode
+				buildFromNode(tree, &newNode)
+
+
+			}
+		} else if action > 1000 {
+			// Raising baby
+
+			raiseValue := (action * n.CurrentFacingBet) / 1000
+			threashold := int(constants.Threashold * float32(n.EffectiveSize))
+			if raiseValue > threashold {
+				// All in situation
+				raiseValue = n.EffectiveSize
+				newNode := node.NewNode(
+					rangeToAdd,
+					betsToAdd,
+					raisesToAdd,
+					n.RaiseLevel +1,
+					n.PotSize + raiseValue,
+					n.EffectiveSize - raiseValue,
+					raiseValue,
+					newPlayerTurn,
+					"fc",
+				)
+
+				n.PostActionNodes[action] = &newNode
+			} else {
+				// Recursive situation as we reopen the action baby
+
+				newNode := node.NewNode(
+					rangeToAdd,
+					betsToAdd,
+					raisesToAdd,
+					n.RaiseLevel +1,
+					n.PotSize + raiseValue,
+					n.EffectiveSize - raiseValue,
+					raiseValue,
+					newPlayerTurn,
+					"fcr",
+				)
+
+				n.PostActionNodes[action] = &newNode
+				buildFromNode(tree, &newNode)
+
+			}
+		}
 
 	}
 }
+
 
 type Tree struct {
 	PotSize       int
@@ -86,5 +210,8 @@ func (t *Tree) MakeRiverTree() {
 	)
 
 	t.Root = &rootNode
+
+	buildFromNode(t, t.Root)
+	fmt.Printf("Came on recursive thing %v times\n", cameOnBuildFromNode)
 
 }

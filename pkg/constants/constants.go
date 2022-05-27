@@ -4,7 +4,8 @@ var MaxRaises int = 3
 var Iterations1 int = 100
 var Iterations2 int = 50
 var Pot int = 1000
-var EffectiveStack = 5000
+var EffectiveStack int = 5000
+var Threashold float32 = 0.6
 
 var MatrixOOP = [][]int{
 	{100, 90, 80, 80, 80, 60, 40, 50, 0, 10, 20, 80, 60},

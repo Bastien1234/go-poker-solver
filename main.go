@@ -39,4 +39,6 @@ func main() {
 	tree.MakeRiverTree()
 
 	fmt.Println("program finished with code 0")
+
+	fmt.Print(tree.Root.PostActionNodes)
 }
