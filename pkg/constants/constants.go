@@ -7,6 +7,10 @@ var Pot int = 1000
 var EffectiveStack int = 5000
 var Threashold float32 = 0.6
 
+var Board []string = []string{"Ah", "Ac", "Ts", "7h", "2h"}
+var Hero []string = []string{"Kh", "kd"}
+var HeroPosition string = "ip"
+
 var MatrixOOP = [][]int{
 	{100, 90, 80, 80, 80, 60, 40, 50, 0, 10, 20, 80, 60},
 	{100, 90, 80, 80, 80, 60, 40, 50, 0, 10, 20, 80, 60},

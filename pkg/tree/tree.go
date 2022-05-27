@@ -35,25 +35,25 @@ func buildFromNode(tree *Tree, n *node.Node) {
 
 		// Base case : maximum raises are reached
 		if action > 1000 && n.RaiseLevel == constants.MaxRaises {
-			var raiseValue int = (action * n.CurrentFacingBet) / 1000 
+			var raiseValue int = (action * n.CurrentFacingBet) / 1000
 			threashold := int(constants.Threashold * float32(n.EffectiveSize))
 			if raiseValue > threashold {
 				raiseValue = n.EffectiveSize
 			}
 
-				newNode := node.NewNode(
-					rangeToAdd,
-					betsToAdd,
-					raisesToAdd,
-					n.RaiseLevel +1,
-					n.PotSize + raiseValue,
-					n.EffectiveSize - raiseValue,
-					raiseValue,
-					newPlayerTurn,
-					"fc",
-				)
+			newNode := node.NewNode(
+				rangeToAdd,
+				betsToAdd,
+				raisesToAdd,
+				n.RaiseLevel+1,
+				n.PotSize+raiseValue,
+				n.EffectiveSize-raiseValue,
+				raiseValue,
+				newPlayerTurn,
+				"fc",
+			)
 
-				n.PostActionNodes[action] = &newNode
+			n.PostActionNodes[action] = &newNode
 		} else if action == 0 || action == -2 || action == -3 {
 			// Another base case : closing actions : fold, call, check back
 
@@ -87,9 +87,9 @@ func buildFromNode(tree *Tree, n *node.Node) {
 					rangeToAdd,
 					betsToAdd,
 					raisesToAdd,
-					n.RaiseLevel + 1,
-					n.PotSize + bet,
-					n.EffectiveSize - bet,
+					n.RaiseLevel+1,
+					n.PotSize+bet,
+					n.EffectiveSize-bet,
 					bet,
 					newPlayerTurn,
 					"fc",
@@ -103,9 +103,9 @@ func buildFromNode(tree *Tree, n *node.Node) {
 					rangeToAdd,
 					betsToAdd,
 					raisesToAdd,
-					n.RaiseLevel + 1,
-					n.PotSize + betValue,
-					n.EffectiveSize - betValue,
+					n.RaiseLevel+1,
+					n.PotSize+betValue,
+					n.EffectiveSize-betValue,
 					betValue,
 					newPlayerTurn,
 					"fcr",
@@ -113,7 +113,6 @@ func buildFromNode(tree *Tree, n *node.Node) {
 
 				n.PostActionNodes[action] = &newNode
 				buildFromNode(tree, &newNode)
-
 
 			}
 		} else if action > 1000 {
@@ -128,9 +127,9 @@ func buildFromNode(tree *Tree, n *node.Node) {
 					rangeToAdd,
 					betsToAdd,
 					raisesToAdd,
-					n.RaiseLevel +1,
-					n.PotSize + raiseValue,
-					n.EffectiveSize - raiseValue,
+					n.RaiseLevel+1,
+					n.PotSize+raiseValue,
+					n.EffectiveSize-raiseValue,
 					raiseValue,
 					newPlayerTurn,
 					"fc",
@@ -144,9 +143,9 @@ func buildFromNode(tree *Tree, n *node.Node) {
 					rangeToAdd,
 					betsToAdd,
 					raisesToAdd,
-					n.RaiseLevel +1,
-					n.PotSize + raiseValue,
-					n.EffectiveSize - raiseValue,
+					n.RaiseLevel+1,
+					n.PotSize+raiseValue,
+					n.EffectiveSize-raiseValue,
 					raiseValue,
 					newPlayerTurn,
 					"fcr",
@@ -160,7 +159,6 @@ func buildFromNode(tree *Tree, n *node.Node) {
 
 	}
 }
-
 
 type Tree struct {
 	PotSize       int
@@ -213,5 +211,31 @@ func (t *Tree) MakeRiverTree() {
 
 	buildFromNode(t, t.Root)
 	fmt.Printf("Came on recursive thing %v times\n", cameOnBuildFromNode)
+
+}
+
+func (t *Tree) PrintTree() {
+	bfsLevel := 0
+	currentNode := t.Root
+	queue := []*node.Node{currentNode}
+
+	for len(queue) > 0 {
+		fmt.Printf("at level : %v\n", bfsLevel)
+
+		currentNode = queue[0]
+		queue = queue[1:]
+		for _, el := range currentNode.Actions {
+			fmt.Printf("Action : %v\n", el)
+		}
+
+		for _, value := range currentNode.PostActionNodes {
+			if value != nil {
+				queue = append(queue, value)
+			}
+
+		}
+
+		bfsLevel++
+	}
 
 }

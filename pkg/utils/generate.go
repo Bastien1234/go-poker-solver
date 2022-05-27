@@ -44,3 +44,20 @@ func Generate4() []int {
 
 	return []int{n1, n2, n3, n4}
 }
+
+func Generate5() []int {
+	random1 := r1.Intn(100)
+	random2 := r1.Intn(100)
+	random3 := r1.Intn(100)
+	random4 := r1.Intn(100)
+	random5 := r1.Intn(100)
+
+	total := random1 + random2 + random3 + random4 + random5
+	n1 := random1 * 100 / total
+	n2 := random2 * 100 / total
+	n3 := random3 * 100 / total
+	n4 := random4 * 100 / total
+	n5 := 100 - n1 - n2 - n3 - n4
+
+	return []int{n1, n2, n3, n4, n5}
+}

@@ -15,12 +15,20 @@ type SubNode struct {
 	BestScore int
 }
 
-func (t *SubNode) SetUp() {
-	t.BestScore = math.MinInt
-	var defaultValue int = 100 / len(t.Actions)
-	for _, act := range t.Actions {
-		t.ActionMap[act] = defaultValue
+func NewSubNode(hand []string, actions []int) SubNode {
+	sn := SubNode{}
+	sn.Hand = hand
+	sn.Actions = actions
+
+	sn.ActionMap = make(map[int]int)
+	sn.BestScore = math.MinInt
+
+	var defaultValue int = 100 / len(sn.Actions)
+	for _, act := range sn.Actions {
+		sn.ActionMap[act] = defaultValue
 	}
+
+	return sn
 }
 
 // Nodes
@@ -38,7 +46,7 @@ type Node struct {
 
 	// To be init later
 	PostActionNodes map[int]*Node
-	GlobalActionMap map[int]int
+	GlobalActionMap map[int]int // Pas computée ...
 	LocalActionMap  map[string]*SubNode
 	GlobalBestScore int
 }
