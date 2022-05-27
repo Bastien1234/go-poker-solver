@@ -81,11 +81,11 @@ func main() {
 
 			traversalOOPScore := 0
 			traversalIPScore := 0
-			/*
-				random2 := utils.Generate2()
-				random3 := utils.Generate3()
-				random4 := utils.Generate4()
-			*/
+
+			random2 := utils.Generate2()
+			random3 := utils.Generate3()
+			random4 := utils.Generate4()
+			random5 := utils.Generate5()
 
 			for iter2 := 0; iter2 < constants.Iterations2; iter2++ {
 				vectorActions := []int{}
@@ -124,18 +124,18 @@ func main() {
 					var numberOfPossibleActions = len(currentSubnode.Actions)
 
 					if numberOfPossibleActions == 2 {
-						actionDistribution = utils.Generate2()
+						actionDistribution = random2
 					} else if numberOfPossibleActions == 3 {
-						actionDistribution = utils.Generate3()
+						actionDistribution = random3
 					} else if numberOfPossibleActions == 4 {
-						actionDistribution = utils.Generate4()
+						actionDistribution = random4
+					} else if numberOfPossibleActions == 5 {
+						actionDistribution = random5
 					}
 
-					fmt.Println(numberOfPossibleActions, " ", actionDistribution)
-
 					// Random choice of action
-					rdmIdx := rand.Intn(numberOfPossibleActions)
-					action := currentNode.Actions[rdmIdx]
+					randomChoice := rand.Intn(100)
+					action := currentNode.Actions[utils.PickIndexFromVector(actionDistribution, randomChoice)]
 
 					// Open check
 					if action == -1 {
@@ -187,37 +187,60 @@ func main() {
 
 				// BFS Updater
 				// Yes we fucking love BFSs !!! <3 <3 <3
-				currentNode := tree.Root
+				bfsCurrentNode := tree.Root
 				data := [][]int{}
-				queue := []*node.Node{currentNode}
+				bfsQueue := []*node.Node{bfsCurrentNode}
 
-				for len(queue) > 0 {
-					currentNode = queue[0]
-					queue = queue[1:]
-					data = append(data, currentNode.Actions)
+				for len(bfsQueue) > 0 {
+					bfsCurrentNode = bfsQueue[0]
+					bfsQueue = bfsQueue[1:]
+					data = append(data, bfsCurrentNode.Actions)
 
-					for _, value := range currentNode.PostActionNodes {
+					for _, value := range bfsCurrentNode.PostActionNodes {
 						if value != nil {
-							queue = append(queue, value)
+							bfsQueue = append(bfsQueue, value)
 						}
 					}
 
+					actionDistribution := []int{}
+
+					var numberOfPossibleActions = len(bfsCurrentNode.Actions)
+
+					if numberOfPossibleActions == 2 {
+						actionDistribution = random2
+					} else if numberOfPossibleActions == 3 {
+						actionDistribution = random3
+					} else if numberOfPossibleActions == 4 {
+						actionDistribution = random4
+					} else if numberOfPossibleActions == 5 {
+						actionDistribution = random5
+					}
+
 					// Compare scores
-					if currentNode.PlayersTurn == "ip" {
-						if currentNode.LocalActionMap[stringHandIP] != nil {
-							previousBestScore := currentNode.LocalActionMap[stringHandIP].BestScore
+					if bfsCurrentNode.PlayersTurn == "ip" {
+						if bfsCurrentNode.LocalActionMap[stringHandIP] != nil {
+							previousBestScore := bfsCurrentNode.LocalActionMap[stringHandIP].BestScore
 							if traversalIPScore > previousBestScore {
 								// Update
-								currentNode.LocalActionMap[stringHandIP].BestScore = traversalIPScore
+								bfsCurrentNode.LocalActionMap[stringHandIP].BestScore = traversalIPScore
+								// Updating actions
+								for idx, el := range bfsCurrentNode.LocalActionMap[stringHandIP].Actions {
+									bfsCurrentNode.LocalActionMap[stringHandIP].ActionMap[el] = actionDistribution[idx]
+								}
+
 							}
 						}
 
 					} else {
-						if currentNode.LocalActionMap[stringHandOOP] != nil {
-							previousBestScore := currentNode.LocalActionMap[stringHandOOP].BestScore
+						if bfsCurrentNode.LocalActionMap[stringHandOOP] != nil {
+							previousBestScore := bfsCurrentNode.LocalActionMap[stringHandOOP].BestScore
 							if traversalOOPScore > previousBestScore {
 								// Update
-								currentNode.LocalActionMap[stringHandOOP].BestScore = traversalOOPScore
+								bfsCurrentNode.LocalActionMap[stringHandOOP].BestScore = traversalOOPScore
+								// Updating actions
+								for idx, el := range bfsCurrentNode.LocalActionMap[stringHandOOP].Actions {
+									bfsCurrentNode.LocalActionMap[stringHandOOP].ActionMap[el] = actionDistribution[idx]
+								}
 							}
 						}
 
@@ -235,7 +258,7 @@ func main() {
 	fmt.Printf("Solving operation took %s", time.Since(start))
 
 	fmt.Println("Checking inside root node")
-	for _, value := range tree.Root.LocalActionMap {
+	for _, value := range tree.Root.PostActionNodes[-1].LocalActionMap {
 		fmt.Println("hand : ", value)
 		// for k, v := range tree.Root.LocalActionMap[k] {
 		// 	v.ActionMap
