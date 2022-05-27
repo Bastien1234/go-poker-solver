@@ -57,6 +57,10 @@ func NewNode(handRange [][]string, actions []int, raises []int, raiseLevel int, 
 
 	n.GlobalBestScore = math.MinInt
 
+	n.PostActionNodes = make(map[int]*Node)
+	n.GlobalActionMap = make(map[int]int)
+	n.LocalActionMap = make(map[string]*SubNode)
+
 	switch n.NodeType {
 	case "fcr":
 		n.Actions = n.Raises

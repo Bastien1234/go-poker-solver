@@ -10,9 +10,9 @@ func buildFromNode(tree *Tree, n *node.Node) {
 	for _, action := range n.Actions {
 		fmt.Println(action)
 		building := true
-		rangeToAdd := make([][]string)
-		betsToAdd := make([]int)
-		raisesToAdd := make([]int)
+		rangeToAdd := make([][]string, 0)
+		betsToAdd := make([]int, 0)
+		raisesToAdd := make([]int, 0)
 		newPlayerTurn := ""
 		newNodeToAdd := node.Node{}
 
@@ -33,6 +33,7 @@ func buildFromNode(tree *Tree, n *node.Node) {
 		// Building according to action
 
 		// Base case : maximum raises are reached
+		fmt.Println("action : ", action)
 
 	}
 }
