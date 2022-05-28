@@ -14,6 +14,16 @@ func Contains(array []string, card string) bool {
 	return false
 }
 
+func ContainsInt(array []int, card int) bool {
+	for _, el := range array {
+		if el == card {
+			return true
+		}
+	}
+
+	return false
+}
+
 func ContainsLocalActionMap(hashmap map[string]*node.SubNode, stringHand string) bool {
 	for key, _ := range hashmap {
 		if key == stringHand {
