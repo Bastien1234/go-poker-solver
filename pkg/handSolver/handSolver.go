@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-func HandSolver(arr []string) {
+func HandSolver(arr []string) int {
 
 	// Constants
 
@@ -119,9 +119,156 @@ func HandSolver(arr []string) {
 		iterations := len(setOfValues) - 4
 
 		for i := 0; i < iterations; i++ {
+			if (setOfValues[i]+1 == setOfValues[i+1]) && (setOfValues[i+1] +1 == setOfValues[i+2]) && (setOfValues[i+2] +1 == setOfValues[i+3]) && (setOfValues[i+3] +1 == setOfValues[i+4]) {
+					possibleStraightHigh = true 
+					straightValueHigh = setOfValues[i+4]
+			}
+		}
 
+		for i := 0; i < iterations; i++ {
+			if (setOfValuesLow[i]+1 == setOfValuesLow[i+1]) && (setOfValuesLow[i+1] +1 == setOfValuesLow[i+2]) && (setOfValuesLow[i+2] +1 == setOfValuesLow[i+3]) && (setOfValuesLow[i+3] +1 == setOfValuesLow[i+4]) {
+					possibleStraightLow = true 
+					straightValueLow = setOfValuesLow[i+4]
+			}
 		}
 
 	}
 
+	/*
+        Check if possible straight flush
+        Return 9 billions then value of high card
+    */
+
+	if possibleColor==true && straightValueHigh > 0 {
+		listOfSuits := make([]int, 0)
+		if colorHearts >= 0 {
+			for _, el := range listHeartsHigh {
+				listOfSuits = append(listOfSuits, el)
+			}
+		} else if colorDiamonds >= 0 {
+			for _, el := range listDiamondsHigh {
+				listOfSuits = append(listOfSuits, el)
+			}
+		} else if colorClubs >= 0 {
+			for _, el := range listClubsHigh {
+				listOfSuits = append(listOfSuits, el)
+			}
+		} else if colorSpades >= 0 {
+			for _, el := range listSpadesHigh {
+				listOfSuits = append(listOfSuits, el)
+			}
+		}
+
+		valueToReturn := 900_000_000_000 
+		for i:= len(listOfSuits)-5; i>=0; i-- {
+			if listOfSuits[i] == listOfSuits[i+4] - 4 {
+				return valueToReturn + (listOfSuits[i+4] * 1e7)
+			}
+		}
+	}
+
+	if possibleColor==true && straightValueLow > 0 {
+		listOfSuits := make([]int, 0)
+		if colorHearts >= 0 {
+			for _, el := range listHeartsLow {
+				listOfSuits = append(listOfSuits, el)
+			}
+		} else if colorDiamonds >= 0 {
+			for _, el := range listDiamondsLow {
+				listOfSuits = append(listOfSuits, el)
+			}
+		} else if colorClubs >= 0 {
+			for _, el := range listClubsLow {
+				listOfSuits = append(listOfSuits, el)
+			}
+		} else if colorSpades >= 0 {
+			for _, el := range listSpadesLow {
+				listOfSuits = append(listOfSuits, el)
+			}
+		}
+
+		valueToReturn := 900_000_000_000 
+		for i:= len(listOfSuits)-5; i>=0; i-- {
+			if listOfSuits[i] == listOfSuits[i+4] - 4 {
+				return valueToReturn + (listOfSuits[i+4] * 1e7)
+			}
+		}
+	}
+
+	/*
+        Check is possible four of a kind
+        returns 8 billions then the FOAK value and finally the kicker
+    */
+
+	if len(setOfValues) < 5 {
+		quadValue := -1
+		bestKicker := -1
+		counter := make(map[int]int)
+
+		for _, el := range valuesArray {
+			if _, ok :=  counter[el]; ok {
+				counter[el] += 1
+				if counter[el] == 4 {
+					quadValue = el 
+					for i:= 0; i<len(setOfValues); i++ {
+						if setOfValues[i] != el {
+							if setOfValues[i] > bestKicker {
+								bestKicker = setOfValues[i]
+							}
+						}
+					}
+
+					return 800_000_000_000 + (quadValue * 1e9) + (bestKicker * 1e7)
+				}
+			} else {
+				counter[el] = 1
+			}
+		}
+	}
+
+	/*
+        Check is possible full house
+    */
+
+	if len(setOfValues) <= 4 {
+		counter := make(map[int]int)
+		bestSet := -1
+		bestPair := -1
+
+		for _, el := range valuesArray {
+			if _, ok := counter[el]; ok {
+				counter[el] += 1
+				if counter[el] == 3 {
+					if el > bestSet {
+						bestSet = el 
+					}
+				}
+			}
+		}
+
+		for _, el := range valuesArray {
+			if counter[el] >= 2 && bestSet != el {
+				if el > bestPair {
+					bestPair = el 
+				}
+			}
+		}
+
+		if bestSet > 0 && bestPair > 0 {
+			return 700_000_000_000 + (bestSet * 1e9) + (bestPair * 1e7)
+		}
+	}
+
+	/*
+        Check if possible color
+    */
+
+	if (possibleColor) {
+		
+	}
+
+
+
+
+	return 0
 }
