@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"pokersolver/pkg/constants"
+	"pokersolver/pkg/million"
 	"pokersolver/pkg/node"
 	"pokersolver/pkg/ranges"
 	"pokersolver/pkg/tree"
@@ -12,6 +13,8 @@ import (
 )
 
 func main() {
+
+	million.SolveOneMillion()
 
 	fmt.Println("Program started !")
 
