@@ -9,17 +9,15 @@ func HandSolver(arr []string) int {
 
 	// Constants
 
-	/*
-		cards := [13]string{"2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"}
-		cardsLow := [13]string{"A", "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K"}
-		colors := [4]string{"h", "d", "c", "s"}
-	*/
+	cards := [13]string{"2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"}
+	cardsLow := [13]string{"A", "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K"}
+	// colors := [4]string{"h", "d", "c", "s"}
 
 	// Hashmaps that we gonna populate later on
 	hashValues := make(map[string]int)
 	hashValuesLow := make(map[string]int)
-	valuesArray := make([]int, 0)
-	valuesArrayLow := make([]int, 0)
+	valuesArray := make([]int, 7)
+	valuesArrayLow := make([]int, 7)
 
 	possibleColor := false
 	possibleStraightHigh := false
@@ -42,6 +40,12 @@ func HandSolver(arr []string) int {
 	colorSpades := 0
 	listSpadesHigh := make([]int, 0)
 	listSpadesLow := make([]int, 0)
+
+	// Populate hashmaps
+	for i := 0; i < 13; i++ {
+		hashValues[cards[i]] = i + 2
+		hashValuesLow[cardsLow[i]] = i + 1
+	}
 
 	// Populate value arrays
 	for i := 0; i < 7; i++ {

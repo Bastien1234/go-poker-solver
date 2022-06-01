@@ -14,7 +14,7 @@ import (
 
 func main() {
 
-	million.SolveOneMillion()
+	million.SolveOneMillion8Threads()
 
 	fmt.Println("Program started !")
 
