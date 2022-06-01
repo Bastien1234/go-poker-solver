@@ -252,9 +252,9 @@ func main() {
 							actionDistribution = random5
 						}
 					} else {
-						// actionDistribution = currentSubnode.Actions
+						actionDistribution = bfsCurrentNode.Actions
 						for _, el := range bfsCurrentNode.Actions {
-							actionDistribution = append(actionDistribution, bfsCurrentNode.currentSubnode.ActionMap[el])
+							actionDistribution = append(actionDistribution, el)
 						}
 					}
 
