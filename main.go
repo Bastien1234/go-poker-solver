@@ -161,16 +161,16 @@ func main() {
 						} else if numberOfPossibleActions == 5 {
 							actionDistribution = random5
 						}
-
-						fmt.Println(actionDistribution)
 					} else {
-						actionDistribution = currentNode.Actions
-						fmt.Println("else block : ", actionDistribution)
+						// actionDistribution = currentSubnode.Actions
+						for _, el := range currentSubnode.Actions {
+							actionDistribution = append(actionDistribution, currentSubnode.ActionMap[el])
+						}
 					}
 
 					// Random choice of action
-					randomChoice := rand.Intn(100)
-					action := currentNode.Actions[utils.PickIndexFromVector(actionDistribution, randomChoice)]
+					randomChoice := rand.Intn(99)
+					action := currentSubnode.Actions[utils.PickIndexFromVector(actionDistribution, randomChoice)]
 
 					// Open check
 					if action == -1 {
@@ -252,7 +252,10 @@ func main() {
 							actionDistribution = random5
 						}
 					} else {
-						actionDistribution = bfsCurrentNode.Actions
+						// actionDistribution = currentSubnode.Actions
+						for _, el := range bfsCurrentNode.Actions {
+							actionDistribution = append(actionDistribution, bfsCurrentNode.currentSubnode.ActionMap[el])
+						}
 					}
 
 					// Compare scores
