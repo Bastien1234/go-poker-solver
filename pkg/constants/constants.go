@@ -1,8 +1,8 @@
 package constants
 
 var MaxRaises int = 2
-var Iterations1 int = 500
-var Iterations2 int = 300
+var Iterations1 int = 2000
+var Iterations2 int = 2000
 var Pot int = 1000
 var EffectiveStack int = 5000
 var Threashold float32 = 0.6

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"pokersolver/pkg/constants"
-	"pokersolver/pkg/million"
+	"pokersolver/pkg/handSolver"
 	"pokersolver/pkg/node"
 	"pokersolver/pkg/ranges"
 	"pokersolver/pkg/tree"
@@ -14,7 +14,7 @@ import (
 
 func main() {
 
-	million.SolveOneMillion8Threads()
+	// million.SolveOneMillion(1000000)
 
 	fmt.Println("Program started !")
 
@@ -24,8 +24,8 @@ func main() {
 	matrixOOP := constants.MatrixOOP
 	matrixIP := constants.MatrixIp
 
-	handsOOP := ranges.RangeToList(matrixOOP, 10)
-	handsIP := ranges.RangeToList(matrixIP, 10)
+	handsOOP := ranges.RangeToList(matrixOOP, 2)
+	handsIP := ranges.RangeToList(matrixIP, 2)
 
 	fmt.Printf("IP player has : %v hands in his range\n", len(handsIP))
 
@@ -36,7 +36,7 @@ func main() {
 	*/
 
 	// Memoziation
-	// solvedHands := make(map[string]int)
+	solvedHands := make(map[string]int)
 
 	// ********** Solving here **********
 
@@ -45,10 +45,10 @@ func main() {
 		constants.EffectiveStack,
 		handsOOP,
 		handsIP,
-		[]int{23, 60, 120},
-		[]int{2500, 3500},
-		[]int{33, 60, 125},
-		[]int{2700, 3200},
+		[]int{50},
+		[]int{50},
+		[]int{2500},
+		[]int{2700},
 	)
 
 	tree.MakeRiverTree()
@@ -76,11 +76,27 @@ func main() {
 		// Check if no duplicates, otherwise chose new cards
 		if duplicatesOOP1 == false && duplicatesOOP2 == false && duplicatesOOP3 == false && duplicatesOOP4 == false && duplicatesIP1 == false && duplicatesIP2 == false && duplicatesIP3 == false && duplicatesIP4 == false {
 
-			// Get hand value of players ... when I'll code that
-			OOPValue := 9
-			IPValue := 5
+			// Get hand value of players
+			var OOPValue int = -1
+			var IPValue int = -1
 			stringHandOOP := OOPHand[0] + OOPHand[1]
 			stringHandIP := IPHand[0] + IPHand[1]
+			boardOOP := append(board, OOPHand...)
+			boardIP := append(board, IPHand...)
+
+			if val, ok := solvedHands[stringHandOOP]; ok {
+				OOPValue = val
+			} else {
+				OOPValue = handSolver.HandSolver(boardOOP)
+				solvedHands[stringHandOOP] = OOPValue
+			}
+
+			if val, ok := solvedHands[stringHandIP]; ok {
+				IPValue = val
+			} else {
+				IPValue = handSolver.HandSolver(boardIP)
+				solvedHands[stringHandIP] = IPValue
+			}
 
 			traversalOOPScore := 0
 			traversalIPScore := 0
@@ -90,9 +106,17 @@ func main() {
 			random4 := utils.Generate4()
 			random5 := utils.Generate5()
 
+			var optimalPlayer string
+
 			for iter2 := 0; iter2 < constants.Iterations2; iter2++ {
 				vectorActions := []int{}
 				nodesToVisit := []node.Node{*tree.Root}
+
+				if iter1%2 == 0 {
+					optimalPlayer = "oop"
+				} else {
+					optimalPlayer = "ip"
+				}
 
 				// You like BFS, do you ? =)
 				for len(nodesToVisit) > 0 {
@@ -126,14 +150,22 @@ func main() {
 
 					var numberOfPossibleActions = len(currentSubnode.Actions)
 
-					if numberOfPossibleActions == 2 {
-						actionDistribution = random2
-					} else if numberOfPossibleActions == 3 {
-						actionDistribution = random3
-					} else if numberOfPossibleActions == 4 {
-						actionDistribution = random4
-					} else if numberOfPossibleActions == 5 {
-						actionDistribution = random5
+					// If not playing optimal : try new frequencies, otherwise we'll use current best frequencies
+					if currentNode.PlayersTurn != optimalPlayer {
+						if numberOfPossibleActions == 2 {
+							actionDistribution = random2
+						} else if numberOfPossibleActions == 3 {
+							actionDistribution = random3
+						} else if numberOfPossibleActions == 4 {
+							actionDistribution = random4
+						} else if numberOfPossibleActions == 5 {
+							actionDistribution = random5
+						}
+
+						fmt.Println(actionDistribution)
+					} else {
+						actionDistribution = currentNode.Actions
+						fmt.Println("else block : ", actionDistribution)
 					}
 
 					// Random choice of action
@@ -209,14 +241,18 @@ func main() {
 
 					var numberOfPossibleActions = len(bfsCurrentNode.Actions)
 
-					if numberOfPossibleActions == 2 {
-						actionDistribution = random2
-					} else if numberOfPossibleActions == 3 {
-						actionDistribution = random3
-					} else if numberOfPossibleActions == 4 {
-						actionDistribution = random4
-					} else if numberOfPossibleActions == 5 {
-						actionDistribution = random5
+					if bfsCurrentNode.PlayersTurn != optimalPlayer {
+						if numberOfPossibleActions == 2 {
+							actionDistribution = random2
+						} else if numberOfPossibleActions == 3 {
+							actionDistribution = random3
+						} else if numberOfPossibleActions == 4 {
+							actionDistribution = random4
+						} else if numberOfPossibleActions == 5 {
+							actionDistribution = random5
+						}
+					} else {
+						actionDistribution = bfsCurrentNode.Actions
 					}
 
 					// Compare scores
@@ -268,6 +304,4 @@ func main() {
 		// }
 
 	}
-
-	fmt.Println("Program finished with code 0")
 }

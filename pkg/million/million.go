@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"pokersolver/pkg/deck"
 	"pokersolver/pkg/handSolver"
-	"sync"
 	"time"
 )
 
-var wg sync.WaitGroup
+// var wg sync.WaitGroup
 
 func SolveOneMillion(n int) {
 	fmt.Println("Starting to solver 1 million hands")
@@ -23,9 +22,10 @@ func SolveOneMillion(n int) {
 	elapsed := time.Since(start)
 	fmt.Println("Took %S to solver 1M hands baby", elapsed)
 
-	wg.Done()
+	// wg.Done()
 }
 
+/*
 func SolveOneMillion8Threads() {
 
 	wg.Add(8)
@@ -35,3 +35,4 @@ func SolveOneMillion8Threads() {
 
 	wg.Wait()
 }
+*/
