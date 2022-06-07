@@ -66,16 +66,15 @@ func NewNode(handRange [][]string, actions []int, raises []int, raiseLevel int, 
 	n.GlobalBestScore = math.MinInt
 
 	n.PostActionNodes = make(map[int]*Node)
-	n.GlobalActionMap = make(map[int]int)
+	// n.GlobalActionMap = make(map[int]int)
 	n.LocalActionMap = make(map[string]*SubNode)
 
 	switch n.NodeType {
 	case "fcr":
 		n.Actions = n.Raises
 		n.Actions = append(n.Actions, -2, -3)
-		var defaultValue int = 100 / len(n.Actions)
 		for _, act := range n.Actions {
-			n.GlobalActionMap[act] = defaultValue
+			n.PostActionNodes[act] = nil
 		}
 		break
 
