@@ -6,30 +6,25 @@ import (
 
 // Subnodes
 
-type SubNode struct {
-	Hand    []string
-	Actions []int
-
-	// To be init later
-	ActionMap          map[int]int
-	Ev                 int
-	CandidateActionMap map[int]int
-	CandidateEv        int
+type NashSubNode struct {
+	Hand        []string
+	Actions     []int
+	Ev          []int
+	Frequencies []int
 }
 
-func NewSubNode(hand []string, actions []int) SubNode {
-	sn := SubNode{}
+func NewNashSubNode(hand []string, actions []int) NashSubNode {
+	sn := NashSubNode{}
 	sn.Hand = hand
 	sn.Actions = actions
 
-	sn.ActionMap = make(map[int]int)
-	sn.Ev = math.MinInt
-	sn.CandidateActionMap = make(map[int]int)
-	sn.CandidateEv = math.MinInt
+	numOfActions := len(actions)
+
+	sn.Ev = make([]int, numOfActions)
 
 	var defaultValue int = 100 / len(sn.Actions)
-	for _, act := range sn.Actions {
-		sn.ActionMap[act] = defaultValue
+	for i := 0; i < len(actions); i++ {
+		sn.Frequencies[i] = defaultValue
 	}
 
 	return sn
@@ -37,25 +32,28 @@ func NewSubNode(hand []string, actions []int) SubNode {
 
 // Nodes
 
-type Node struct {
-	HandRange        [][]string
-	Actions          []int
-	Raises           []int
-	RaiseLevel       int
-	PotSize          int
-	EffectiveSize    int
-	CurrentFacingBet int
-	PlayersTurn      string
-	NodeType         string
+type NashNode struct {
+	HandRange               [][]string
+	HandFrequency           []int
+	OpponentRange           [][]string
+	OpponentRangeFrenquency []int
+	Actions                 []int
+	Raises                  []int
+	RaiseLevel              int
+	PotSize                 int
+	EffectiveSize           int
+	CurrentFacingBet        int
+	PlayersTurn             string
+	NodeType                string
 
 	// To be init later
 	PostActionNodes map[int]*Node
 	GlobalActionMap map[int]int // Pas computée ...
 	LocalActionMap  map[string]*SubNode
-	GlobalBestScore int
+	GlobalBestScore int // Pas computé non plus ...
 }
 
-func NewNode(handRange [][]string, actions []int, raises []int, raiseLevel int, potSize int, effectiveSize int, currentFacingBet int, playersTurn string, nodeType string) Node {
+func NewNashNode(handRange [][]string, actions []int, raises []int, raiseLevel int, potSize int, effectiveSize int, currentFacingBet int, playersTurn string, nodeType string) Node {
 	n := Node{}
 	n.HandRange = handRange
 	n.Actions = actions

@@ -132,16 +132,21 @@ func Solve() {
 						currentHand = IPHand
 					}
 
+					// Use this new subnode only if it doesn't exist already, see below
 					currentSubnode := node.NewSubNode(currentHand, currentNode.Actions)
 
 					// Populate subnodes hashmap
 					if currentNode.PlayersTurn == "ip" {
 						if !utils.ContainsLocalActionMap(currentNode.LocalActionMap, stringHandIP) {
 							currentNode.LocalActionMap[stringHandIP] = &currentSubnode
+						} else {
+							currentSubnode = *currentNode.LocalActionMap[stringHandIP]
 						}
 					} else if currentNode.PlayersTurn == "oop" {
 						if !utils.ContainsLocalActionMap(currentNode.LocalActionMap, stringHandOOP) {
 							currentNode.LocalActionMap[stringHandOOP] = &currentSubnode
+						} else {
+							currentSubnode = *currentNode.LocalActionMap[stringHandOOP]
 						}
 					}
 
@@ -181,6 +186,8 @@ func Solve() {
 					} else if action == -2 {
 						// Call
 						vectorActions = append(vectorActions, action)
+
+						// We need to populate ???????
 
 						// Showdown baby
 						if OOPValue > IPValue {
