@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	solver.Solve()
+	solver.NashSolver()
 }

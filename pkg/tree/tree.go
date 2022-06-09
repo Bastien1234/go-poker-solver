@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"pokersolver/pkg/constants"
 	"pokersolver/pkg/node"
+	"pokersolver/pkg/ranges"
 )
 
 var cameOnBuildFromNode int = 0
@@ -12,7 +13,7 @@ func buildFromNode(tree *Tree, n *node.Node) {
 	cameOnBuildFromNode++
 
 	for _, action := range n.Actions {
-		rangeToAdd := make([][]string, 0)
+		rangeToAdd := make([]ranges.Hand, 0)
 		betsToAdd := make([]int, 0)
 		raisesToAdd := make([]int, 0)
 		newPlayerTurn := ""
@@ -163,8 +164,8 @@ func buildFromNode(tree *Tree, n *node.Node) {
 type Tree struct {
 	PotSize       int
 	EffectiveSize int
-	OopRange      [][]string
-	IpRange       [][]string
+	OopRange      []ranges.Hand
+	IpRange       []ranges.Hand
 	OopBets       []int
 	IpBets        []int
 	OopRaises     []int
@@ -175,7 +176,7 @@ type Tree struct {
 	Root      *node.Node
 }
 
-func NewTree(potSize int, effectiveSize int, oopRange [][]string, ipRange [][]string, oopBets []int, ipBets []int, oopRaises []int, ipRaises []int) Tree {
+func NewTree(potSize int, effectiveSize int, oopRange []ranges.Hand, ipRange []ranges.Hand, oopBets []int, ipBets []int, oopRaises []int, ipRaises []int) Tree {
 	tree := Tree{}
 	tree.PotSize = potSize
 	tree.EffectiveSize = effectiveSize

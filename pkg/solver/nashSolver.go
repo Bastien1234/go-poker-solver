@@ -18,19 +18,19 @@ func NashSolver() {
 	matrixOOP := constants.MatrixOOP
 	matrixIP := constants.MatrixIp
 
-	handsOOP := ranges.RangeToList(matrixOOP, 25)
-	handsIP := ranges.RangeToList(matrixIP, 25)
+	handsOOP := ranges.RangeToVector(matrixOOP)
+	handsIP := ranges.RangeToVector(matrixIP)
 
 	fmt.Printf("IP player has : %v hands in his range\n", len(handsIP))
 
-	board := constants.Board
+	// board := constants.Board
 	/*
 		hero := constants.Hero
 		heroPosition := constants.HeroPosition
 	*/
 
 	// Memoziation
-	solvedHands := make(map[string]int)
+	// solvedHands := make(map[string]int)
 
 	// ********** Solving here **********
 
@@ -48,13 +48,4 @@ func NashSolver() {
 	tree.MakeRiverTree()
 
 	fmt.Printf("Solving operation took %s\n", time.Since(start))
-
-	fmt.Println("Checking inside root node")
-	for _, value := range tree.Root.LocalActionMap {
-		fmt.Println("hand : ", value)
-		// for k, v := range tree.Root.LocalActionMap[k] {
-		// 	v.ActionMap
-		// }
-
-	}
 }
