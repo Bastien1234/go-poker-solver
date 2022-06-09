@@ -22,6 +22,7 @@ func NewSubNode(hand []string, actions []int) SubNode {
 	numOfActions := len(actions)
 
 	sn.Ev = make([]int, numOfActions)
+	sn.Frequencies = make([]int, numOfActions)
 
 	var defaultValue int = 100 / len(sn.Actions)
 	for i := 0; i < len(actions); i++ {

@@ -6,8 +6,8 @@ import (
 )
 
 type Hand struct {
-	cards     []string
-	frequency int
+	Cards     []string
+	Frequency int
 }
 
 func RangeToList(matrix [][]int, pctToKeep int) [][]string {
@@ -146,8 +146,8 @@ func RangeToVector(matrix [][]int) []Hand {
 						card2 := mapMatrixToCards[i] + colorCombo[1]
 						handToAdd := []string{card1, card2}
 						h := Hand{}
-						h.cards = handToAdd
-						h.frequency = matrix[i][j]
+						h.Cards = handToAdd
+						h.Frequency = matrix[i][j]
 						vectorToReturn = append(vectorToReturn, h)
 					}
 				}
@@ -161,8 +161,8 @@ func RangeToVector(matrix [][]int) []Hand {
 						card2 := mapMatrixToCards[j] + color
 						handToAdd := []string{card1, card2}
 						h := Hand{}
-						h.cards = handToAdd
-						h.frequency = matrix[i][j]
+						h.Cards = handToAdd
+						h.Frequency = matrix[i][j]
 						vectorToReturn = append(vectorToReturn, h)
 					}
 				}
@@ -176,15 +176,15 @@ func RangeToVector(matrix [][]int) []Hand {
 						card2 := mapMatrixToCards[j] + colorCombo[1]
 						handToAdd1 := []string{card1, card2}
 						h1 := Hand{}
-						h1.cards = handToAdd1
-						h1.frequency = matrix[i][j]
+						h1.Cards = handToAdd1
+						h1.Frequency = matrix[i][j]
 
 						card3 := mapMatrixToCards[j] + colorCombo[0]
 						card4 := mapMatrixToCards[i] + colorCombo[1]
 						handToAdd2 := []string{card3, card4}
 						h2 := Hand{}
-						h2.cards = handToAdd2
-						h2.frequency = matrix[i][j]
+						h2.Cards = handToAdd2
+						h2.Frequency = matrix[i][j]
 
 						vectorToReturn = append(vectorToReturn, h1, h2)
 
