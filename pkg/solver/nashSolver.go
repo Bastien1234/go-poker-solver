@@ -3,15 +3,17 @@ package solver
 import (
 	"fmt"
 	"pokersolver/pkg/constants"
+	"pokersolver/pkg/node"
 	"pokersolver/pkg/ranges"
 	"pokersolver/pkg/tree"
-	"pokersolver/pkg/node"
 	"time"
 )
 
 func NashSolver() {
 
 	// CHECK POT SIZE L'ENKULAY !!!
+
+	// CHECK TO REMOVE DUPLICATES
 
 	fmt.Println("Starting nash solver !")
 
@@ -50,12 +52,12 @@ func NashSolver() {
 
 	tree.MakeRiverTree()
 
-	for iter :=0; iter< constants.NashIterations; iter++ {
+	for iter := 0; iter < constants.NashIterations; iter++ {
 		// 1 - Compute ev
 
 		// BFS of nodes
 		currentNode := tree.Root
-		queue := []*node.Node {currentNode}
+		queue := []*node.Node{currentNode}
 		for len(queue) > 0 {
 			currentNode = queue[0]
 			queue = queue[1:]
@@ -89,21 +91,19 @@ func NashSolver() {
 				subnodesToVisit = subnodesToVisit[1:]
 
 				// Calculation of ev logic comes here
+				for index, action := range currentSubnode.Actions {
+					nextNode := currentNode.PostActionNodes[action]
+
+				}
+
 			}
-			
-
-
-
 
 		}
-
-
 
 		// 2 - Update frequencies
 
 		// 3 - Pass hands to next nodes
 	}
-	
 
 	fmt.Printf("Solving operation took %s\n", time.Since(start))
 }
