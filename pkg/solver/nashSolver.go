@@ -90,9 +90,17 @@ func NashSolver() {
 				currentSubnode := subnodesToVisit[0]
 				subnodesToVisit = subnodesToVisit[1:]
 
+				fmt.Println(currentSubnode)
+
 				// Calculation of ev logic comes here
 				for index, action := range currentSubnode.Actions {
-					nextNode := currentNode.PostActionNodes[action]
+					// Keep fractions... or anyways call that some better way lol
+					var ev float64 = 0.0
+
+					// More trees traversal because that's what we do here
+					
+
+
 
 				}
 
