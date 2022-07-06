@@ -69,11 +69,12 @@ func NashSolver() {
 			}
 
 			// Now get every value off the node
+			lenstv := 0
 
 			subnodesToVisit := []*node.SubNode{}
 			for _, sn := range currentNode.LocalActionMap {
 				subnodesToVisit = append(subnodesToVisit, sn)
-
+				lenstv++
 			}
 
 			for len(subnodesToVisit) > 0 {
