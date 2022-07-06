@@ -1,0 +1,6 @@
+Memo of integers :
+
+-3 fold
+-2 call
+-1 open check
+0 check

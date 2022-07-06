@@ -103,5 +103,11 @@ func NewNode(handRange []ranges.Hand, actions []int, raises []int, raiseLevel in
 
 	}
 
+	for _, hand := range n.HandRange {
+		name := hand.Cards[0] + hand.Cards[1]
+		subN := NewSubNode(hand.Cards, n.Actions)
+		n.LocalActionMap[name] = &subN
+	}
+
 	return n
 }
