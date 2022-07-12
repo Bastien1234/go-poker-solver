@@ -96,22 +96,12 @@ func NashSolver() {
 								currentFrequency++
 								currentHandFrenquency++
 
-								// for idx, n := range subnode.Actions {
-								// 	if n == subnodeAction {
-								// 		currentFrequency = subnode.Frequencies[idx]
-								// 	}
-								// }
-
-								// for _, n := range currentNode.HandRange {
-								// 	card := n.Cards[0] + n.Cards[1]
-								// 	subNodeCard := subnode.Hand[0] + subnode.Hand[1]
-								// 	if card == subNodeCard {
-								// 		currentHandFrenquency = n.Frequency
-								// 	}
-								// }
-
 								if subnodeAction == -3 { // fold
 									valueOfAction += (float64(currentNode.PotSize) * float64(currentFrequency) * float64(currentHandFrenquency)) * divider
+								}
+
+								if subnodeAction == -2 { // call
+									// get who's winning...
 								}
 							}
 						}
