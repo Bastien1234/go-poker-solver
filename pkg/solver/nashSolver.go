@@ -89,26 +89,26 @@ func NashSolver() {
 						divider = 1 / float64((len(currentNode.PostActionNodes[action].LocalActionMap)))
 
 						for _, subnode := range currentNode.PostActionNodes[action].LocalActionMap {
-							for _, subnodeAction := range subnode.Actions {
-								var currentFrequency int = 0
-								var currentHandFrenquency int = 0
+							for subnodeActionIndex, subnodeAction := range subnode.Actions {
+								var currentFrequency int = subnode.Frequencies[subnodeActionIndex]
+								var currentHandFrenquency int = subnode.Weight
 
 								currentFrequency++
 								currentHandFrenquency++
 
-								// 		for idx, n := range subnode.Actions {
-								// 			if n == subnodeAction {
-								// 				currentFrequency = subnode.Frequencies[idx]
-								// 			}
-								// 		}
+								// for idx, n := range subnode.Actions {
+								// 	if n == subnodeAction {
+								// 		currentFrequency = subnode.Frequencies[idx]
+								// 	}
+								// }
 
-								// 		for _, n := range currentNode.HandRange {
-								// 			card := n.Cards[0] + n.Cards[1]
-								// 			subNodeCard := subnode.Hand[0] + subnode.Hand[1]
-								// 			if card == subNodeCard {
-								// 				currentHandFrenquency = n.Frequency
-								// 			}
-								// 		}
+								// for _, n := range currentNode.HandRange {
+								// 	card := n.Cards[0] + n.Cards[1]
+								// 	subNodeCard := subnode.Hand[0] + subnode.Hand[1]
+								// 	if card == subNodeCard {
+								// 		currentHandFrenquency = n.Frequency
+								// 	}
+								// }
 
 								if subnodeAction == -3 { // fold
 									valueOfAction += (float64(currentNode.PotSize) * float64(currentFrequency) * float64(currentHandFrenquency)) * divider
@@ -129,7 +129,7 @@ func NashSolver() {
 
 		// 3 - Pass hands to next nodes
 
-		fmt.Println("Iter : ", iter)
+		// fmt.Println("Iter : ", iter)
 	}
 
 	fmt.Printf("Solving operation took %s\n", time.Since(start))

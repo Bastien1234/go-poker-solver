@@ -12,12 +12,14 @@ type SubNode struct {
 	Actions     []int
 	Ev          []int
 	Frequencies []int
+	Weight int
 }
 
-func NewSubNode(hand []string, actions []int) SubNode {
+func NewSubNode(hand []string, actions []int, weight int) SubNode {
 	sn := SubNode{}
 	sn.Hand = hand
 	sn.Actions = actions
+	sn.Weight = weight
 
 	numOfActions := len(actions)
 
@@ -105,7 +107,7 @@ func NewNode(handRange []ranges.Hand, actions []int, raises []int, raiseLevel in
 
 	for _, hand := range n.HandRange {
 		name := hand.Cards[0] + hand.Cards[1]
-		subN := NewSubNode(hand.Cards, n.Actions)
+		subN := NewSubNode(hand.Cards, n.Actions, hand.Frequency)
 		n.LocalActionMap[name] = &subN
 	}
 
