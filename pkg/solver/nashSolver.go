@@ -3,13 +3,30 @@ package solver
 import (
 	"fmt"
 	"pokersolver/pkg/constants"
+	"pokersolver/pkg/handSolver"
 	"pokersolver/pkg/node"
 	"pokersolver/pkg/ranges"
 	"pokersolver/pkg/tree"
+	"sort"
+	"sync"
 	"time"
 )
 
+// Memoziation
+type SolvedHandsStruct struct {
+	solvedHands map[string]int
+	sync.Mutex
+}
+
+func NewSolvedHandsStruct() SolvedHandsStruct {
+	s := SolvedHandsStruct{}
+	s.solvedHands = make(map[string]int)
+
+	return s
+}
+
 func NashSolver() {
+	var wg sync.WaitGroup
 
 	// CHECK POT SIZE L'ENKULAY !!!
 
@@ -28,14 +45,12 @@ func NashSolver() {
 
 	fmt.Printf("IP player has : %v hands in his range\n", len(handsIP))
 
-	// board := constants.Board
 	/*
 		hero := constants.Hero
 		heroPosition := constants.HeroPosition
 	*/
 
-	// Memoziation
-	// solvedHands := make(map[string]int)
+	solvedHandsStruct := NewSolvedHandsStruct()
 
 	// ********** Solving here **********
 
@@ -82,36 +97,82 @@ func NashSolver() {
 				subnodesToVisit = subnodesToVisit[1:]
 
 				// Calculation of ev logic comes here
-				for _, action := range currentSubnode.Actions {
-					var valueOfAction float64 = 0.0
-					var divider float64
-					if currentNode.PostActionNodes[action] != nil {
-						divider = 1 / float64((len(currentNode.PostActionNodes[action].LocalActionMap)))
 
-						for _, subnode := range currentNode.PostActionNodes[action].LocalActionMap {
-							for subnodeActionIndex, subnodeAction := range subnode.Actions {
-								var currentFrequency int = subnode.Frequencies[subnodeActionIndex]
-								var currentHandFrenquency int = subnode.Weight
+				// multi threading
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					for _, action := range currentSubnode.Actions {
+						var valueOfAction float64 = 0.0
+						var divider float64
+						if currentNode.PostActionNodes[action] != nil {
+							divider = 1 / float64((len(currentNode.PostActionNodes[action].LocalActionMap)))
 
-								currentFrequency++
-								currentHandFrenquency++
+							for _, subnode := range currentNode.PostActionNodes[action].LocalActionMap {
+								for subnodeActionIndex, subnodeAction := range subnode.Actions {
+									var currentFrequency int = subnode.Frequencies[subnodeActionIndex]
+									var currentHandFrenquency int = subnode.Weight
 
-								if subnodeAction == -3 { // fold
-									valueOfAction += (float64(currentNode.PotSize) * float64(currentFrequency) * float64(currentHandFrenquency)) * divider
-								}
+									currentFrequency++
+									currentHandFrenquency++
 
-								if subnodeAction == -2 { // call
-									// get who's winning...
+									if subnodeAction == -3 { // fold
+										valueOfAction += (float64(currentNode.PotSize) * float64(currentFrequency) * float64(currentHandFrenquency)) * divider
+									}
+
+									if subnodeAction == -2 { // call
+										// get who's winning...
+										oopFinalHand := append(constants.Board, currentSubnode.Hand[0], currentSubnode.Hand[1])
+										ipFinalHand := append(constants.Board, subnode.Hand[0], subnode.Hand[1])
+										// Check efficiency of sorting please...
+										sort.Strings(oopFinalHand)
+										sort.Strings(ipFinalHand)
+										oopFinalHandString := ""
+										ipFinalHandString := ""
+										for i := 0; i < 7; i++ {
+											oopFinalHandString += oopFinalHand[i]
+											ipFinalHandString += ipFinalHand[i]
+										}
+
+										var oopValue int
+										var ipValue int
+
+										solvedHandsStruct.Lock()
+
+										if val, ok := solvedHandsStruct.solvedHands[oopFinalHandString]; ok {
+											oopValue = val
+										} else {
+											solvedHandsStruct.solvedHands[oopFinalHandString] = handSolver.HandSolver(oopFinalHand)
+											oopValue = solvedHandsStruct.solvedHands[oopFinalHandString]
+										}
+
+										if val, ok := solvedHandsStruct.solvedHands[ipFinalHandString]; ok {
+											ipValue = val
+										} else {
+											solvedHandsStruct.solvedHands[ipFinalHandString] = handSolver.HandSolver(ipFinalHand)
+											ipValue = solvedHandsStruct.solvedHands[ipFinalHandString]
+										}
+
+										solvedHandsStruct.Unlock()
+
+										if oopValue < ipValue {
+											valueOfAction -= (float64(currentNode.PotSize) * float64(currentFrequency) * float64(currentHandFrenquency)) * divider
+										} else {
+											valueOfAction += (float64(currentNode.PotSize) * float64(currentFrequency) * float64(currentHandFrenquency)) * divider
+										}
+									}
 								}
 							}
+							divider += 1
+							valueOfAction += 1
 						}
-						divider += 1
-						valueOfAction += 1
-					}
 
-				}
+					}
+				}()
 
 			}
+
+			wg.Wait()
 
 		}
 
@@ -119,7 +180,9 @@ func NashSolver() {
 
 		// 3 - Pass hands to next nodes
 
-		// fmt.Println("Iter : ", iter)
+		if iter%20 == 0 {
+			fmt.Println("Iter : ", iter)
+		}
 	}
 
 	fmt.Printf("Solving operation took %s\n", time.Since(start))
