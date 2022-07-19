@@ -102,7 +102,7 @@ func NashSolver() {
 				wg.Add(1)
 				go func() {
 					defer wg.Done()
-					for _, action := range currentSubnode.Actions {
+					for actionIdx, action := range currentSubnode.Actions {
 						var valueOfAction float64 = 0.0
 						var divider float64
 						if currentNode.PostActionNodes[action] != nil {
@@ -117,7 +117,7 @@ func NashSolver() {
 									currentHandFrenquency++
 
 									if subnodeAction == -3 { // fold
-										valueOfAction += (float64(currentNode.PotSize) * float64(currentFrequency) * float64(currentHandFrenquency)) * divider
+										valueOfAction += ((1 / float64(currentNode.PotSize)) * float64(currentFrequency) * float64(currentHandFrenquency)) * divider
 									}
 
 									if subnodeAction == -2 { // call
@@ -155,16 +155,20 @@ func NashSolver() {
 
 										solvedHandsStruct.Unlock()
 
+										// what if equality ?? lol
+
 										if oopValue < ipValue {
-											valueOfAction -= (float64(currentNode.PotSize) * float64(currentFrequency) * float64(currentHandFrenquency)) * divider
+											valueOfAction -= ((1 / float64(currentNode.PotSize)) * float64(currentFrequency) * float64(currentHandFrenquency)) * divider
 										} else {
-											valueOfAction += (float64(currentNode.PotSize) * float64(currentFrequency) * float64(currentHandFrenquency)) * divider
+											valueOfAction += ((1 / float64(currentNode.PotSize)) * float64(currentFrequency) * float64(currentHandFrenquency)) * divider
 										}
 									}
+
+									currentSubnode.Ev[actionIdx] = int(valueOfAction)
+
 								}
 							}
 							divider += 1
-							valueOfAction += 1
 						}
 
 					}
@@ -180,9 +184,8 @@ func NashSolver() {
 
 		// 3 - Pass hands to next nodes
 
-		if iter%20 == 0 {
-			fmt.Println("Iter : ", iter)
-		}
+		fmt.Println("Iter : ", iter)
+
 	}
 
 	fmt.Printf("Solving operation took %s\n", time.Since(start))
