@@ -7,6 +7,4 @@ import (
 
 func main() {
 	solver.NashSolver()
-
-
 }

@@ -4,10 +4,12 @@ var MaxRaises int = 2
 var Iterations1 int = 100000
 var Iterations2 int = 300
 var NashIterations int = 5
+var HandsToKeepFromRange int = 50
 var Pot int = 1000
 var EffectiveStack int = 9000
 var Threashold float32 = 0.6
 var MultiplicatorImprovement float32 = 1.10
+var Delta int = 10
 
 var Board []string = []string{"Ac", "7d", "5h", "7h", "2s"}
 var Hero []string = []string{"Kh", "kd"}
