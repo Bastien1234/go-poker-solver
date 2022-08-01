@@ -4,6 +4,8 @@ import (
 	"math"
 )
 
+// !!!!!!!!!!! It goes under 0 !!!!!!!!!
+
 func UpdateFrenquencies(ev []int, frenquencies *[]int, delta int) {
 	if len(ev) != len(*frenquencies) {
 		panic("Error in inputs !")
@@ -43,10 +45,10 @@ func UpdateFrenquencies(ev []int, frenquencies *[]int, delta int) {
 
 	totalNew := 0
 	for index, el := range *frenquencies {
-		newFreq[index] = el + int(float32(pointsOffMiddle[index]) * pointValue)
-		totalNew += el + int(float32(pointsOffMiddle[index]) * pointValue)
+		newFreq[index] = el + int(float32(pointsOffMiddle[index])*pointValue)
+		totalNew += el + int(float32(pointsOffMiddle[index])*pointValue)
 	}
 	missingPoint := 100 - totalNew
-	newFreq[len(ev) - 1] = newFreq[len(ev) - 1] + missingPoint
+	newFreq[len(ev)-1] = newFreq[len(ev)-1] + missingPoint
 	*frenquencies = newFreq
 }

@@ -274,12 +274,12 @@ func NashSolver() {
 
 			for _, value := range currentNodeUpdate.PostActionNodes {
 				if value != nil {
-					queue = append(queue, value)
+					queueUpdate = append(queueUpdate, value)
 				}
 			}
 
 			subnodesToVisit := []*node.SubNode{}
-			for _, sn := range currentNode.LocalActionMap {
+			for _, sn := range currentNodeUpdate.LocalActionMap {
 				subnodesToVisit = append(subnodesToVisit, sn)
 			}
 
@@ -288,6 +288,7 @@ func NashSolver() {
 				subnodesToVisit = subnodesToVisit[1:]
 
 				// Calculation of ev logic comes here
+				// fmt.Printf("In subnode : ", currentSubnode.Hand)
 				utils.UpdateFrenquencies(currentSubnode.Ev, &currentSubnode.Frequencies, constants.Delta)
 			}
 		}
