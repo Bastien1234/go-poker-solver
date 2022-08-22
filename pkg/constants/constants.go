@@ -3,17 +3,36 @@ package constants
 var MaxRaises int = 2
 var Iterations1 int = 100000
 var Iterations2 int = 300
-var NashIterations int = 10
-var HandsToKeepFromRange int = 50
-var Pot int = 1000
-var EffectiveStack int = 9000
+var NashIterations int = 50
+var HandsToKeepFromRange int = 30
+var Pot int = 75
+var EffectiveStack int = 450
 var Threashold float32 = 0.6
 var MultiplicatorImprovement float32 = 1.10
 var Delta int = 10
 
-var Board []string = []string{"Ah", "7d", "5h", "7h", "2s"}
+var Board []string = []string{"Ah", "7d", "5h", "7h", "Ts"}
 var Hero []string = []string{"Kh", "kd"}
 var HeroPosition string = "ip"
+
+/*
+var MatrixOOP = [][]int{
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 100, 100, 100, 0, 0, 0, 0, 0, 0, 0},
+}
+*/
+
 
 var MatrixOOP = [][]int{
 	{0, 0, 0, 0, 50, 50, 50, 50, 50, 50, 50, 50, 50},
@@ -22,20 +41,15 @@ var MatrixOOP = [][]int{
 	{50, 50, 100, 0, 100, 100, 100, 100, 0, 0, 0, 0, 0},
 	{50, 100, 0, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	{100, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-
 	{100, 100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-
 	{100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-
 	{100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-
 	{100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-
 	{100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-
 	{100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	{100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 }
+
 
 var MatrixIp = [][]int{
 	{100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100},

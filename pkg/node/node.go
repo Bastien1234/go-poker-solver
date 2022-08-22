@@ -1,7 +1,6 @@
 package node
 
 import (
-	"math"
 	"pokersolver/pkg/ranges"
 )
 
@@ -13,6 +12,7 @@ type SubNode struct {
 	Ev          []int
 	Frequencies []int
 	Weight int
+	Updated bool // Debugging purposes
 }
 
 func NewSubNode(hand []string, actions []int, weight int) SubNode {
@@ -30,6 +30,9 @@ func NewSubNode(hand []string, actions []int, weight int) SubNode {
 	for i := 0; i < len(actions); i++ {
 		sn.Frequencies[i] = defaultValue
 	}
+
+	// For debug
+	sn.Updated = false
 
 	return sn
 }
@@ -50,9 +53,7 @@ type Node struct {
 
 	// To be init later
 	PostActionNodes map[int]*Node
-	GlobalActionMap map[int]int // Pas computée ...
 	LocalActionMap  map[string]*SubNode
-	GlobalBestScore int // Pas computé non plus ...
 }
 
 func NewNode(handRange []ranges.Hand, actions []int, raises []int, raiseLevel int, potSize int, effectiveSize int, currentFacingBet int, playersTurn string, nodeType string) Node {
@@ -67,10 +68,7 @@ func NewNode(handRange []ranges.Hand, actions []int, raises []int, raiseLevel in
 	n.PlayersTurn = playersTurn
 	n.NodeType = nodeType
 
-	n.GlobalBestScore = math.MinInt
-
 	n.PostActionNodes = make(map[int]*Node)
-	// n.GlobalActionMap = make(map[int]int)
 	n.LocalActionMap = make(map[string]*SubNode)
 
 	switch n.NodeType {
