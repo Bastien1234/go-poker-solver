@@ -16,7 +16,7 @@ func SolveOneMillion(n int) {
 	for i := 0; i < n; i++ {
 		deck := deck.MakeDeck()
 		handToSolve := deck[0:7]
-		handSolver.HandSolver(handToSolve)
+		handSolver.HandSolver(handToSolve, false)
 	}
 
 	elapsed := time.Since(start)

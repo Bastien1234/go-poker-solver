@@ -11,7 +11,7 @@ import (
 func main() {
 	// solver.NashSolver()
 
-	fmt.Println(handSolver.HandSolver([]string{"9h", "Kh", "Qh", "Jh", "Th", "2s", "2d"}))
+	fmt.Println(handSolver.HandSolver([]string{"9h", "Kh", "Qh", "Jh", "Th", "2s", "2d"}, false))
 	// ev := []int{500, 25, -1000, 100}
 	// frequencies := []int{0, 0, 100, 0}
 	// delta := 10

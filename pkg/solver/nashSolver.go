@@ -2,6 +2,7 @@ package solver
 
 import (
 	"fmt"
+	"math/rand"
 	"pokersolver/pkg/constants"
 	"pokersolver/pkg/handSolver"
 	"pokersolver/pkg/node"
@@ -11,7 +12,6 @@ import (
 	"sort"
 	"sync"
 	"time"
-	"math/rand"
 )
 
 // Memoziation
@@ -56,7 +56,6 @@ func NashSolver() {
 	filteredOOP := make([]ranges.Hand, 0)
 	filteredIP := make([]ranges.Hand, 0)
 
-	
 	for _, hand := range handsOOP {
 		if hand.Cards[0] != constants.Board[0] && hand.Cards[1] != constants.Board[0] && hand.Cards[0] != constants.Board[1] && hand.Cards[1] != constants.Board[1] && hand.Cards[0] != constants.Board[2] && hand.Cards[1] != constants.Board[2] && hand.Cards[0] != constants.Board[3] && hand.Cards[1] != constants.Board[3] && hand.Cards[0] != constants.Board[4] && hand.Cards[1] != constants.Board[4] {
 			filteredOOP = append(filteredOOP, hand)
@@ -68,14 +67,12 @@ func NashSolver() {
 			filteredIP = append(filteredIP, hand)
 		}
 	}
-	
+
 	handsOOP = filteredOOP
 	handsIP = filteredIP
 
 	handsOOP = handsOOP[0:constants.HandsToKeepFromRange]
 	handsIP = handsIP[0:constants.HandsToKeepFromRange]
-
-	
 
 	fmt.Printf("IP player has : %v hands in his range\n", len(handsIP))
 
@@ -87,7 +84,6 @@ func NashSolver() {
 	// if heroPosition == "oop" {
 	// 	handsOOP = append(handsOOP, hero)
 	// }
-	
 
 	solvedHandsStruct := NewSolvedHandsStruct()
 
@@ -218,14 +214,14 @@ func NashSolver() {
 											if val, ok := solvedHandsStruct.solvedHands[oopFinalHandString]; ok {
 												oopValue = val
 											} else {
-												solvedHandsStruct.solvedHands[oopFinalHandString] = handSolver.HandSolver(oopFinalHand)
+												solvedHandsStruct.solvedHands[oopFinalHandString] = handSolver.HandSolver(oopFinalHand, false)
 												oopValue = solvedHandsStruct.solvedHands[oopFinalHandString]
 											}
 
 											if val, ok := solvedHandsStruct.solvedHands[ipFinalHandString]; ok {
 												ipValue = val
 											} else {
-												solvedHandsStruct.solvedHands[ipFinalHandString] = handSolver.HandSolver(ipFinalHand)
+												solvedHandsStruct.solvedHands[ipFinalHandString] = handSolver.HandSolver(ipFinalHand, false)
 												ipValue = solvedHandsStruct.solvedHands[ipFinalHandString]
 											}
 
@@ -302,51 +298,47 @@ func NashSolver() {
 				}
 			}
 
-			
 			for _, currentSubnode := range currentNodeUpdate.LocalActionMap {
 				// debug
 
 				/*
-				fmt.Println("\n\nCurrent node : ", currentNodeUpdate.RaiseLevel)
-				fmt.Println("Ev : ", currentSubnode.Ev)
-				fmt.Println("Frequencies : ", currentSubnode.Frequencies)
-				fmt.Println("Actions : ", currentSubnode.Actions)
-				fmt.Println("Hand : ", currentSubnode.Hand)
+					fmt.Println("\n\nCurrent node : ", currentNodeUpdate.RaiseLevel)
+					fmt.Println("Ev : ", currentSubnode.Ev)
+					fmt.Println("Frequencies : ", currentSubnode.Frequencies)
+					fmt.Println("Actions : ", currentSubnode.Actions)
+					fmt.Println("Hand : ", currentSubnode.Hand)
 				*/
 
 				utils.UpdateFrenquencies(&currentSubnode.Ev, &currentSubnode.Frequencies, constants.Delta)
 				/*
-				fmt.Println("New freq : ", currentSubnode.Frequencies)
+					fmt.Println("New freq : ", currentSubnode.Frequencies)
 				*/
 
 				// Debug
 				currentSubnode.Updated = true
-				 
+
 			}
-			
 
 			/*
-			subnodesToVisit := []*node.SubNode{}
-			for _, sn := range currentNodeUpdate.LocalActionMap {
-				subnodesToVisit = append(subnodesToVisit, sn)
-			}
+				subnodesToVisit := []*node.SubNode{}
+				for _, sn := range currentNodeUpdate.LocalActionMap {
+					subnodesToVisit = append(subnodesToVisit, sn)
+				}
 
-			for len(subnodesToVisit) > 0 {
-				currentSubnode := subnodesToVisit[0]
-				subnodesToVisit = subnodesToVisit[1:]
+				for len(subnodesToVisit) > 0 {
+					currentSubnode := subnodesToVisit[0]
+					subnodesToVisit = subnodesToVisit[1:]
 
-				// Calculation of ev logic comes here
-				// fmt.Printf("In subnode : ", currentSubnode.Hand)
-				utils.UpdateFrenquencies(&currentSubnode.Ev, &currentSubnode.Frequencies, constants.Delta)
-			}
+					// Calculation of ev logic comes here
+					// fmt.Printf("In subnode : ", currentSubnode.Hand)
+					utils.UpdateFrenquencies(&currentSubnode.Ev, &currentSubnode.Frequencies, constants.Delta)
+				}
 			*/
 		}
 
 		fmt.Println("Iter : ", iter)
 
 	}
-
-	
 
 	fmt.Printf("Solving operation took %s\n", time.Since(start))
 }

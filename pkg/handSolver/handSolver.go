@@ -5,13 +5,51 @@ import (
 	"sort"
 )
 
-func HandSolver(arr []string) int {
+func HandSolver(arr []string, safe bool) int {
 
 	// Constants
 
-	cards := [13]string{"2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"}
-	cardsLow := [13]string{"A", "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K"}
-	// colors := [4]string{"h", "d", "c", "s"}
+	cards := []string{"2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"}
+	cardsLow := []string{"A", "2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K"}
+	colors := []string{"h", "d", "c", "s"}
+
+	// Checking input in safe mode
+
+	if safe {
+		// Correct length
+		if len(arr) != 7 {
+			return -1
+		}
+
+		// Duplicates
+		newSlice := make([]string, 0)
+		for _, el := range arr {
+			if !utils.Contains(newSlice, el) {
+				newSlice = append(newSlice, el)
+			}
+		}
+		if len(newSlice) != 7 {
+			return -1
+		}
+
+		// Correct inputs
+		for _, el := range arr {
+			if len(el) != 2 {
+				return -1
+			}
+
+			var card string = el[0:1]
+			var color string = el[1:]
+
+			if !utils.Contains(cards, card) {
+				return -1
+			}
+
+			if !utils.Contains(colors, color) {
+				return -1
+			}
+		}
+	}
 
 	// Hashmaps that we gonna populate later on
 	hashValues := make(map[string]int)
