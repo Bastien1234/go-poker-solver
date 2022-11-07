@@ -169,7 +169,7 @@ func HandSolver(arr []string) int {
 		valueToReturn := 900_000_000_000
 		for i := len(listOfSuits) - 5; i >= 0; i-- {
 			if listOfSuits[i] == listOfSuits[i+4]-4 {
-				return valueToReturn + (listOfSuits[i+4] * 1e7)
+				return valueToReturn + (listOfSuits[i+4] * 1e9)
 			}
 		}
 	}
@@ -197,7 +197,7 @@ func HandSolver(arr []string) int {
 		valueToReturn := 900_000_000_000
 		for i := len(listOfSuits) - 5; i >= 0; i-- {
 			if listOfSuits[i] == listOfSuits[i+4]-4 {
-				return valueToReturn + (listOfSuits[i+4] * 1e7)
+				return valueToReturn + (listOfSuits[i+4] * 1e9)
 			}
 		}
 	}
