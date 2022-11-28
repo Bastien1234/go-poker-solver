@@ -1,17 +1,13 @@
 package main
 
 import (
-	// "pokersolver/pkg/solver"
-	"pokersolver/pkg/handSolver"
-
+	"pokersolver/pkg/solver"
 	// "pokersolver/pkg/utils"
-	"fmt"
 )
 
 func main() {
-	// solver.NashSolver()
+	solver.NashSolver()
 
-	fmt.Println(handSolver.HandSolver([]string{"9h", "Kh", "Qh", "Jh", "Th", "2s", "2d"}, false))
 	// ev := []int{500, 25, -1000, 100}
 	// frequencies := []int{0, 0, 100, 0}
 	// delta := 10
