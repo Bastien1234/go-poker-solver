@@ -137,6 +137,17 @@ func NashSolver() {
 
 				// multi threading
 				wg.Add(1)
+
+				// ************************************************************************************************************************************
+				/*
+
+					Refactoring from here
+
+				*/
+				// ********************************************************************************************************************************
+
+				currentSubnode.Ev = getSubnodeEv(currentSubnode)
+
 				go func() {
 					if currentNode.PlayersTurn == "root" || currentNode.PlayersTurn == "oop" {
 						playerIsIP = false
