@@ -146,22 +146,17 @@ func NashSolver() {
 				*/
 				// ********************************************************************************************************************************
 
-				currentSubnode.Ev = getSubnodeEv(currentSubnode)
+				currentSubnode.Ev = getSubnodeEv(currentSubnode, &playerIsIP)
+
+				// See how to handle multithreading
 
 				go func() {
-					if currentNode.PlayersTurn == "root" || currentNode.PlayersTurn == "oop" {
-						playerIsIP = false
-					} else if currentNode.PlayersTurn == "ip" {
-						playerIsIP = true
-					} else {
-						panic("WTF !!!")
-					}
+					
 					defer wg.Done()
 					for actionIdx, action := range currentSubnode.Actions {
 
 						// Get action value
-						var valueOfAction float64 = 0.0
-						var divider float64
+						
 						if currentNode.PostActionNodes[action] == nil {
 							continue
 						}
