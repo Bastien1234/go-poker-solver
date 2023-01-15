@@ -4,7 +4,7 @@ import (
 	"pokersolver/pkg/node"
 )
 
-evRecursor = func(curNode *node.Node, devider float64, valueOfAction *float64, localAction int, plrPos *bool) {
+func evRecursor(curNode *node.Node, devider float64, valueOfAction *float64, localAction int, plrPos *bool) float32 {
 
 	/*
 		**********************************************************************************************************
@@ -13,6 +13,33 @@ evRecursor = func(curNode *node.Node, devider float64, valueOfAction *float64, l
 
 	*/
 
+
+	// Should return current action value
+	// Entry point is subnode action
+
+	switch localAction {
+	case -3:
+			// Handle fold
+
+	case 0:
+			// Handle call or check back
+
+	case -1:
+			// Handle open check
+		
+
+	default:
+			// pass recursion
+		
+
+	}
+
+
+
+
+
+
+	return 0.0
 
 	
 
