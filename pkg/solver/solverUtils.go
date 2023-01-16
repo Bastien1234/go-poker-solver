@@ -13,23 +13,27 @@ func evRecursor(curNode *node.Node, devider float64, valueOfAction *float64, loc
 
 	*/
 
+	var currentFrequency int = subnode.Frequencies[subnodeActionIndex]
+	var currentHandFrenquency int = subnode.Weight
+
 
 	// Should return current action value
 	// Entry point is subnode action
 
 	switch localAction {
 	case -3:
-			// Handle fold
+		// Handle fold
+		return handleFold()
 
-	case 0:
-			// Handle call or check back
+	case 0, 2:
+		// Handle call or check back
 
 	case -1:
-			// Handle open check
+		// Handle open check
 		
 
 	default:
-			// pass recursion
+		// pass recursion
 		
 
 	}
