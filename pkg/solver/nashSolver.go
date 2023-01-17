@@ -14,18 +14,7 @@ import (
 	"time"
 )
 
-// Memoziation
-type SolvedHandsStruct struct {
-	solvedHands map[string]int
-	sync.Mutex
-}
 
-func NewSolvedHandsStruct() SolvedHandsStruct {
-	s := SolvedHandsStruct{}
-	s.solvedHands = make(map[string]int)
-
-	return s
-}
 
 func NashSolver() {
 	var wg sync.WaitGroup
@@ -85,7 +74,6 @@ func NashSolver() {
 	// 	handsOOP = append(handsOOP, hero)
 	// }
 
-	solvedHandsStruct := NewSolvedHandsStruct()
 
 	// ********** Solving here **********
 
