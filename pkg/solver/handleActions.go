@@ -2,6 +2,7 @@ package solver
 
 import (
 	"pokersolver/pkg/node"
+	"sync"
 )
 
 // Memoziation
@@ -17,14 +18,15 @@ func NewSolvedHandsStruct() SolvedHandsStruct {
 	return s
 }
 
-solvedHandsStruct := NewSolvedHandsStruct()
+var solvedHandsStruct = NewSolvedHandsStruct()
 
-// ----------- Devider !!!
+// ----------- divider !!!
 
 
-func handleFold(curNode *node.Node, currentFrequency, currentHandFrenquency int, devider float32) float32 {
+func handleFold(curNode *node.Node, currentFrequency, currentHandFrenquency int, divider float32) float32 {
 	var returnedValue float32 = 0.0
 
+	/*
 	if playerIsIP {
 		if curNode.PlayersTurn == "oop" {
 			// Loosing invested money before folding
@@ -45,9 +47,12 @@ func handleFold(curNode *node.Node, currentFrequency, currentHandFrenquency int,
 	}
 
 	return returnedValue
+	*/
+
+	return 0.0
 }
 
-func handleCallAndCheckBack(curNode *node.Node, currentFrequency, currentHandFrenquency int, devider float32) float32 {
+func handleCallAndCheckBack(curNode *node.Node, currentFrequency, currentHandFrenquency int, divider float32) float32 {
 	var returnedValue float32 = 0.0
 
 	// get who's winning...

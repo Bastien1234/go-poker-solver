@@ -150,9 +150,9 @@ func NashSolver() {
 						}
 						divider = 1 / float64((len(currentNode.PostActionNodes[action].LocalActionMap)))
 
-						var evRecursor func(curNode *node.Node, devider float64, valueOfAction *float64, localAction int, plrPos *bool)
+						var evRecursor func(curNode *node.Node, divider float64, valueOfAction *float64, localAction int, plrPos *bool)
 
-						evRecursor = func(curNode *node.Node, devider float64, valueOfAction *float64, localAction int, plrPos *bool) {
+						evRecursor = func(curNode *node.Node, divider float64, valueOfAction *float64, localAction int, plrPos *bool) {
 
 							if curNode.PostActionNodes[localAction] != nil {
 
