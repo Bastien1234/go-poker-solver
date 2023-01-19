@@ -18,6 +18,8 @@ func evRecursor(curNode *node.Node, divider float64, localAction int) float32 {
 	// Case of closing actions
 	case -3:
 		// Handle fold
+
+		// Maybe just return var float32 0.0
 		return handleFold(curNode, currentFrequency, currentHandFrenquency, divider)
 
 	case 0, 2:
@@ -35,7 +37,7 @@ func evRecursor(curNode *node.Node, divider float64, localAction int) float32 {
 
 	
 
-func getSubnodeEv(currentNode node.Node, currentSubnode node.SubNode, playerIsIP *bool) float32 {
+func GetSubnodeEv(currentNode node.Node, currentSubnode node.SubNode, playerIsIP *bool) float32 {
 
 	// Set up hero's position
 	// See if necessary
