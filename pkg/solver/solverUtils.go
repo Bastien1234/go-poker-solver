@@ -9,7 +9,6 @@ func evRecursor(curNode *node.Node, divider float64, localAction int) float32 {
 	var currentFrequency int = subnode.Frequencies[subnodeActionIndex]
 	var currentHandFrenquency int = subnode.Weight
 
-
 	// Should return current action value
 	// Entry point is subnode action
 
@@ -20,12 +19,12 @@ func evRecursor(curNode *node.Node, divider float64, localAction int) float32 {
 		// Handle fold
 
 		// Maybe just return var float32 0.0
-		return handleFold(curNode, currentFrequency, currentHandFrenquency, divider)
+		return HandleFold(curNode, currentFrequency, currentHandFrenquency, divider)
 
 	case 0, 2:
 		// Handle call or check back
-		return handleCallAndCheckBack(curNode, currentFrequency, currentHandFrenquency, divider)
-	
+		return HandleCallAndCheckBack(curNode, currentFrequency, currentHandFrenquency, divider)
+
 	// Case of non closing action, passing recursion
 	default:
 		// Handle open check, raise or bet
@@ -33,9 +32,6 @@ func evRecursor(curNode *node.Node, divider float64, localAction int) float32 {
 		return evRecursor(nextNode, 1, localAction)
 	}
 }
-
-
-	
 
 func GetSubnodeEv(currentNode node.Node, currentSubnode node.SubNode, playerIsIP *bool) float32 {
 

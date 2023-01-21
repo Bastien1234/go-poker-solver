@@ -1,7 +1,10 @@
-package solver 
+package solver
 
 import (
+	"pokersolver/pkg/constants"
+	"pokersolver/pkg/handSolver"
 	"pokersolver/pkg/node"
+	"sort"
 	"sync"
 )
 
@@ -22,34 +25,33 @@ var solvedHandsStruct = NewSolvedHandsStruct()
 
 // ----------- divider !!!
 
-
 func handleFold(curNode *node.Node, currentFrequency, currentHandFrenquency int, divider float32) float32 {
 	var returnedValue float32 = 0.0
 
 	/*
-	if playerIsIP {
-		if curNode.PlayersTurn == "oop" {
-			// Loosing invested money before folding
+		if playerIsIP {
+			if curNode.PlayersTurn == "oop" {
+				// Loosing invested money before folding
 
-			// ------------- One has to see if GTO just returns 0
-			// -------------- Refactor to not have everything in float32 and avoid casting
-			returnedValue -= ((float64(curNode.PotSize) / 2) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider
+				// ------------- One has to see if GTO just returns 0
+				// -------------- Refactor to not have everything in float32 and avoid casting
+				returnedValue -= ((float64(curNode.PotSize) / 2) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider
+			} else {
+				returnedValue += ((float64(curNode.PotSize)) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider
+			}
 		} else {
-			returnedValue += ((float64(curNode.PotSize)) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider
+			if curNode.PlayersTurn == "ip" {
+				// Loosing invested money before folding
+				returnedValue -= ((float64(curNode.PotSize) / 2) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider
+			} else {
+				returnedValue += (float64(curNode.PotSize) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider
+			}
 		}
-	} else {
-		if curNode.PlayersTurn == "ip" {
-			// Loosing invested money before folding
-			returnedValue -= ((float64(curNode.PotSize) / 2) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider
-		} else {
-			returnedValue += (float64(curNode.PotSize) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider
-		}
-	}
 
-	return returnedValue
+		return returnedValue
 	*/
 
-	return 0.0
+	return returnedValue
 }
 
 func handleCallAndCheckBack(curNode *node.Node, currentFrequency, currentHandFrenquency int, divider float32) float32 {
