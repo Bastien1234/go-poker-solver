@@ -9,10 +9,10 @@ import (
 type SubNode struct {
 	Hand        []string
 	Actions     []int
-	Ev          []int
+	Ev          []float64
 	Frequencies []int
-	Weight int
-	Updated bool // Debugging purposes
+	Weight      int
+	Updated     bool // Debugging purposes
 }
 
 func NewSubNode(hand []string, actions []int, weight int) SubNode {
@@ -23,7 +23,7 @@ func NewSubNode(hand []string, actions []int, weight int) SubNode {
 
 	numOfActions := len(actions)
 
-	sn.Ev = make([]int, numOfActions)
+	sn.Ev = make([]float64, numOfActions)
 	sn.Frequencies = make([]int, numOfActions)
 
 	var defaultValue int = 100 / len(sn.Actions)

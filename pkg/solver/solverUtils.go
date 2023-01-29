@@ -38,6 +38,39 @@ func GetSubnodeEv(currentNode node.Node, currentSubnode node.SubNode) float64 {
 	// Iterate actions of the subnode
 	for actionIdx, subnodeAction := range currentSubnode.Actions {
 
-		currentSubnode.Ev[actionIdx] = evRecursor(currentNode, currentSubnode, subnodeAction, float64(1.0), action)
+		currentSubnode.Ev[actionIdx] = actionEv(subnodeAction, &currentNode, &currentSubnode)
 	}
 }
+
+func ActionEv(action int, curNode *node.Node, curSubnode *node.SubNode) float64 {
+	var valueAccumulated float64 = 0.0
+
+	switch action {
+	case 3:
+		/*
+			In case of fold, just return 0, therefore simply return valueAccumulated variable is fine
+		*/
+
+	case 0, 2:
+		// Closing action
+		valueAccumulated += handleCallAndCheckBack()
+
+	default:
+		nbNextSubnodes := len(curNode.PostActionNodes[action].LocalActionMap)
+		nbNextNodeActions := len(curNode.PostActionNodes[action].Actions)
+		var divider float64 = (1.0 / float64(nbNextSubnodes)) / float64(nbNextNodeActions)
+
+		nextNode := curNode.PostActionNodes[action]
+		for _, nextSubNode := range nextNode.LocalActionMap {
+			for _, nextAction := range curNode.Actions {
+				valueAccumulated += ActionEv(nextAction, nextNode, nextSubNode) * divider
+			}
+		}
+	}
+
+	return valueAccumulated
+}
+
+/*
+	papa est trop beau et rigolo trop gentil et intelligeant
+*/

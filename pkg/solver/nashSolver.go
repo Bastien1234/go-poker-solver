@@ -115,7 +115,9 @@ func NashSolver() {
 				currentSubnode := subnodesToVisit[0]
 				subnodesToVisit = subnodesToVisit[1:]
 
-				currentSubnode.Ev = GetSubnodeEv(currentSubnode, &playerIsIP)
+				for _, el := range currentSubnode.Ev {
+					el = GetSubnodeEv(currentNode, currentSubnode)
+				}
 
 			}
 		}
