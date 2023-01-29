@@ -25,8 +25,8 @@ var solvedHandsStruct = NewSolvedHandsStruct()
 
 // ----------- divider !!!
 
-func handleFold(curNode *node.Node, currentFrequency, currentHandFrenquency int, divider float32) float32 {
-	var returnedValue float32 = 0.0
+func handleFold(curNode *node.Node, currentFrequency, currentHandFrenquency int, divider float64) float64 {
+	var returnedValue float64 = 0.0
 
 	/*
 		if playerIsIP {
@@ -34,7 +34,7 @@ func handleFold(curNode *node.Node, currentFrequency, currentHandFrenquency int,
 				// Loosing invested money before folding
 
 				// ------------- One has to see if GTO just returns 0
-				// -------------- Refactor to not have everything in float32 and avoid casting
+				// -------------- Refactor to not have everything in float64 and avoid casting
 				returnedValue -= ((float64(curNode.PotSize) / 2) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider
 			} else {
 				returnedValue += ((float64(curNode.PotSize)) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider
@@ -54,13 +54,13 @@ func handleFold(curNode *node.Node, currentFrequency, currentHandFrenquency int,
 	return returnedValue
 }
 
-func handleCallAndCheckBack(curNode *node.Node, currentFrequency, currentHandFrenquency int, divider float32) float32 {
-	var returnedValue float32 = 0.0
+func handleCallAndCheckBack(curNode *node.Node, currentSubnode *node.SubNode, currentFrequency, currentHandFrenquency int, divider float64) float64 {
+	var returnedValue float64 = 0.0
 
 	// get who's winning...
 
 	oopFinalHand := append(constants.Board, currentSubnode.Hand[0], currentSubnode.Hand[1])
-	ipFinalHand := append(constants.Board, subnode.Hand[0], subnode.Hand[1])
+	ipFinalHand := append(constants.Board, currentSubnode.Hand[0], currentSubnode.Hand[1])
 
 	sort.Strings(oopFinalHand)
 	sort.Strings(ipFinalHand)
@@ -94,7 +94,15 @@ func handleCallAndCheckBack(curNode *node.Node, currentFrequency, currentHandFre
 
 	// what if equality ?? lol
 
+	var playerIsIP bool
+	if curNode.PlayersTurn == "ip" {
+		playerIsIP = true
+	} else {
+		playerIsIP = false
+	}
+
 	if oopValue < ipValue {
+
 		// IP wins
 		if playerIsIP == false {
 			returnedValue -= (float64(curNode.PotSize) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider

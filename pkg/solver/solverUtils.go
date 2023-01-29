@@ -4,7 +4,7 @@ import (
 	"pokersolver/pkg/node"
 )
 
-func evRecursor(curNode *node.Node, divider float64, localAction int) float32 {
+func evRecursor(curNode *node.Node, subnode *node.SubNode, subnodeAction int, divider float64, localAction int) float64 {
 
 	var currentFrequency int = subnode.Frequencies[subnodeActionIndex]
 	var currentHandFrenquency int = subnode.Weight
@@ -33,23 +33,11 @@ func evRecursor(curNode *node.Node, divider float64, localAction int) float32 {
 	}
 }
 
-func GetSubnodeEv(currentNode node.Node, currentSubnode node.SubNode, playerIsIP *bool) float32 {
-
-	// Set up hero's position
-	// See if necessary
-	if currentNode.PlayersTurn == "root" || currentNode.PlayersTurn == "oop" {
-		playerIsIP = false
-	} else if currentNode.PlayersTurn == "ip" {
-		playerIsIP = true
-	} else {
-		panic("WTF !!!")
-	}
+func GetSubnodeEv(currentNode node.Node, currentSubnode node.SubNode) float64 {
 
 	// Iterate actions of the subnode
-	for actionIdx, action := range currentSubnode.Actions {
-		var valueOfAction float64 = 0.0
-		var divider float64
+	for actionIdx, subnodeAction := range currentSubnode.Actions {
 
-		currentSubnode.Ev[actionIdx] = evRecursor(currentNode, 1, action)
+		currentSubnode.Ev[actionIdx] = evRecursor(currentNode, currentSubnode, subnodeAction, float64(1.0), action)
 	}
 }
