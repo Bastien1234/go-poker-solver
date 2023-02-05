@@ -54,8 +54,16 @@ func handleFold(curNode *node.Node, currentFrequency, currentHandFrenquency int,
 	return returnedValue
 }
 
-func handleCallAndCheckBack(curNode *node.Node, currentSubnode *node.SubNode, currentFrequency, currentHandFrenquency int, divider float64) float64 {
+func handleCallAndCheckBack(curNode *node.Node, currentSubnode *node.SubNode, action int) float64 {
 	var returnedValue float64 = 0.0
+	currentHandFrenquency := currentSubnode.Weight
+	var actionIdx int
+	for idx, el := range currentSubnode.Actions {
+		if el == action {
+			actionIdx = idx
+		}
+	}
+	currentFrequency := currentSubnode.Frequencies[actionIdx]
 
 	// get who's winning...
 
@@ -92,8 +100,6 @@ func handleCallAndCheckBack(curNode *node.Node, currentSubnode *node.SubNode, cu
 
 	solvedHandsStruct.Unlock()
 
-	// what if equality ?? lol
-
 	var playerIsIP bool
 	if curNode.PlayersTurn == "ip" {
 		playerIsIP = true
@@ -105,21 +111,21 @@ func handleCallAndCheckBack(curNode *node.Node, currentSubnode *node.SubNode, cu
 
 		// IP wins
 		if playerIsIP == false {
-			returnedValue -= (float64(curNode.PotSize) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider
+			returnedValue -= (float64(curNode.PotSize) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100))
 		} else {
-			returnedValue += (float64(curNode.PotSize) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider
+			returnedValue += (float64(curNode.PotSize) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100))
 		}
 
 	} else if oopValue > ipValue {
 		// OOP wins
 		if playerIsIP {
-			returnedValue -= (float64(curNode.PotSize) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider
+			returnedValue -= (float64(curNode.PotSize) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100))
 		} else {
-			returnedValue += (float64(curNode.PotSize) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider
+			returnedValue += (float64(curNode.PotSize) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100))
 		}
 	} else if oopValue == ipValue {
 		// Equality, split dat pot babe
-		returnedValue += ((float64(curNode.PotSize) / 2) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100)) * divider
+		returnedValue += ((float64(curNode.PotSize) / 2) * (float64(currentFrequency) / 100) * (float64(currentHandFrenquency) / 100))
 	}
 
 	return returnedValue

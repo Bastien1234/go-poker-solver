@@ -4,6 +4,7 @@ import (
 	"pokersolver/pkg/node"
 )
 
+/*
 func evRecursor(curNode *node.Node, subnode *node.SubNode, subnodeAction int, divider float64, localAction int) float64 {
 
 	var currentFrequency int = subnode.Frequencies[subnodeActionIndex]
@@ -32,13 +33,14 @@ func evRecursor(curNode *node.Node, subnode *node.SubNode, subnodeAction int, di
 		return evRecursor(nextNode, 1, localAction)
 	}
 }
+*/
 
-func GetSubnodeEv(currentNode node.Node, currentSubnode node.SubNode) float64 {
+func SetSubnodeEv(currentNode *node.Node, currentSubnode *node.SubNode) {
 
 	// Iterate actions of the subnode
 	for actionIdx, subnodeAction := range currentSubnode.Actions {
 
-		currentSubnode.Ev[actionIdx] = actionEv(subnodeAction, &currentNode, &currentSubnode)
+		currentSubnode.Ev[actionIdx] = ActionEv(subnodeAction, currentNode, currentSubnode)
 	}
 }
 
@@ -53,7 +55,7 @@ func ActionEv(action int, curNode *node.Node, curSubnode *node.SubNode) float64 
 
 	case 0, 2:
 		// Closing action
-		valueAccumulated += handleCallAndCheckBack()
+		valueAccumulated += handleCallAndCheckBack(curNode, curSubnode, action)
 
 	default:
 		nbNextSubnodes := len(curNode.PostActionNodes[action].LocalActionMap)

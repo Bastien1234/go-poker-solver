@@ -7,7 +7,6 @@ import (
 	"pokersolver/pkg/node"
 	"pokersolver/pkg/ranges"
 	"pokersolver/pkg/tree"
-	"pokersolver/pkg/utils"
 	"time"
 )
 
@@ -84,8 +83,6 @@ func NashSolver() {
 
 	tree.MakeRiverTree()
 
-	var playerIsIP bool
-
 	for iter := 0; iter < constants.NashIterations; iter++ {
 		// 1 - Compute ev
 
@@ -115,8 +112,8 @@ func NashSolver() {
 				currentSubnode := subnodesToVisit[0]
 				subnodesToVisit = subnodesToVisit[1:]
 
-				for _, el := range currentSubnode.Ev {
-					el = GetSubnodeEv(currentNode, currentSubnode)
+				for i := 0; i < len(currentSubnode.Ev); i++ {
+					SetSubnodeEv(currentNode, currentSubnode)
 				}
 
 			}
@@ -149,7 +146,9 @@ func NashSolver() {
 					fmt.Println("Hand : ", currentSubnode.Hand)
 				*/
 
-				utils.UpdateFrenquencies(&currentSubnode.Ev, &currentSubnode.Frequencies, constants.Delta)
+				// here *************************************************************************************************************************************
+
+				// utils.UpdateFrenquencies(&currentSubnode.Ev, &currentSubnode.Frequencies, constants.Delta)
 				/*
 					fmt.Println("New freq : ", currentSubnode.Frequencies)
 				*/
