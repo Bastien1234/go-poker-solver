@@ -2,6 +2,7 @@ package solver
 
 import (
 	"pokersolver/pkg/node"
+	"fmt"
 )
 
 /*
@@ -40,7 +41,9 @@ func SetSubnodeEv(currentNode *node.Node, currentSubnode *node.SubNode) {
 	// Iterate actions of the subnode
 	for actionIdx, subnodeAction := range currentSubnode.Actions {
 
-		currentSubnode.Ev[actionIdx] = ActionEv(subnodeAction, currentNode, currentSubnode)
+		value := ActionEv(subnodeAction, currentNode, currentSubnode)
+		currentSubnode.Ev[actionIdx] = value
+		fmt.Printf("Set ev to %f\n", value)
 	}
 }
 
@@ -48,12 +51,12 @@ func ActionEv(action int, curNode *node.Node, curSubnode *node.SubNode) float64 
 	var valueAccumulated float64 = 0.0
 
 	switch action {
-	case 3:
+	case -3:
 		/*
 			In case of fold, just return 0, therefore simply return valueAccumulated variable is fine
 		*/
 
-	case 0, 2:
+	case 0, -2:
 		// Closing action
 		valueAccumulated += handleCallAndCheckBack(curNode, curSubnode, action)
 
@@ -64,7 +67,7 @@ func ActionEv(action int, curNode *node.Node, curSubnode *node.SubNode) float64 
 
 		nextNode := curNode.PostActionNodes[action]
 		for _, nextSubNode := range nextNode.LocalActionMap {
-			for _, nextAction := range curNode.Actions {
+			for _, nextAction := range nextNode.Actions {
 				valueAccumulated += ActionEv(nextAction, nextNode, nextSubNode) * divider
 			}
 		}

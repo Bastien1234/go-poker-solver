@@ -112,10 +112,7 @@ func NashSolver() {
 				currentSubnode := subnodesToVisit[0]
 				subnodesToVisit = subnodesToVisit[1:]
 
-				for i := 0; i < len(currentSubnode.Ev); i++ {
-					SetSubnodeEv(currentNode, currentSubnode)
-				}
-
+				SetSubnodeEv(currentNode, currentSubnode)
 			}
 		}
 
