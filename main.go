@@ -1,12 +1,14 @@
 package main
 
 import (
-	"pokersolver/pkg/solver"
+	"pokersolver/pkg/million"
 	// "pokersolver/pkg/utils"
 )
 
 func main() {
-	solver.NashSolver()
+	// solver.NashSolver()
+
+	million.SolveOneMillion(1000000, true)
 
 	// ev := []int{500, 25, -1000, 100}
 	// frequencies := []int{0, 0, 100, 0}

@@ -2,18 +2,32 @@ package constants
 
 var MaxRaises int = 2
 var Iterations1 int = 100000
-var Iterations2 int = 300
-var NashIterations int = 50
 var HandsToKeepFromRange int = 30
 var Pot int = 75
 var EffectiveStack int = 450
-var Threashold float32 = 0.6
-var MultiplicatorImprovement float32 = 1.10
-var Delta int = 10
+var Threashold float64 = 0.6
+var AllInSamplesize = 50
+var MaxRundowns = 200
 
 var Board []string = []string{"Ah", "7d", "5h", "7h", "Ts"}
 var Hero []string = []string{"Kh", "kd"}
 var HeroPosition string = "ip"
+
+// Strategies
+var OOPFlopBets = []float64{0.25, 0.75}
+var IPFlopBets = []float64{0.25, 0.75}
+var OOPFlopRaises = []float64{2.5}
+var IPFlopRaises = []float64{2.5}
+
+var OOPTurnBets = []float64{0.25, 0.75}
+var IPTurnBets = []float64{0.25, 0.75}
+var OOPTurnRaises = []float64{2.5}
+var IPTurnRaises = []float64{2.5}
+
+var OOPRiverBets = []float64{0.25, 0.75}
+var IPRiverBets = []float64{0.25, 0.75}
+var OOPRiverRaises = []float64{2.5}
+var IPRiverRaises = []float64{2.5}
 
 /*
 var MatrixOOP = [][]int{
@@ -33,8 +47,7 @@ var MatrixOOP = [][]int{
 }
 */
 
-
-var MatrixOOP = [][]int{
+var MatrixOOP = [][]float64{
 	{0, 0, 0, 0, 50, 50, 50, 50, 50, 50, 50, 50, 50},
 	{0, 0, 50, 100, 100, 100, 100, 100, 0, 0, 0, 0, 0},
 	{0, 50, 0, 10, 100, 100, 100, 100, 0, 0, 0, 0, 0},
@@ -50,8 +63,7 @@ var MatrixOOP = [][]int{
 	{100, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 }
 
-
-var MatrixIp = [][]int{
+var MatrixIp = [][]float64{
 	{100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100},
 	{100, 100, 100, 100, 100, 100, 100, 0, 0, 0, 0, 0, 0},
 	{100, 100, 100, 100, 100, 100, 0, 0, 0, 0, 0, 0, 0},

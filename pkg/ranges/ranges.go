@@ -1,16 +1,12 @@
 package ranges
 
-import (
-	"math/rand"
-	"time"
-)
-
 type Hand struct {
 	Cards     []string
-	Frequency int
+	Frequency float64
 }
 
-func RangeToList(matrix [][]int, pctToKeep int) [][]string {
+/*
+func RangeToList(matrix [][]float64, pctToKeep int) [][]string {
 	var vectorToReturn [][]string = make([][]string, 0)
 	mapMatrixToCards := map[int]string{
 		0:  "A",
@@ -106,8 +102,9 @@ func RangeToList(matrix [][]int, pctToKeep int) [][]string {
 
 	return finalVector
 }
+*/
 
-func RangeToVector(matrix [][]int) []Hand {
+func RangeToVector(matrix [][]float64) []Hand {
 	var vectorToReturn []Hand = make([]Hand, 0)
 	mapMatrixToCards := map[int]string{
 		0:  "A",
