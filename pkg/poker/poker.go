@@ -364,13 +364,14 @@ func uniformDist(n int) []float64 {
 	return result
 }
 
+// FIX ME: implement limit on nodes expanding
 var rundowns = constants.MaxRundowns
 
 func (n *PokerNode) buildChildren() {
 	// Case chance node p0
 	previousAction := n.history[len(n.history)-1 : len(n.history)]
 	switch previousAction {
-	case h_Chance:
+	case h_RootNode:
 		n.children = buildP0Deals(n)
 		n.probabilities = uniformDist(len(n.children))
 
@@ -381,6 +382,41 @@ func (n *PokerNode) buildChildren() {
 	// Case new chance node
 	case h_p1Deal:
 		n.children = buildOpenAction(n)
+
+	case h_Chance:
+		n.children = buildP1Deals(n)
+	case h_Check:
+		n.children = buildCBAction(n)
+
+	// Bet and raise have to take into account if we are all in...
+	case h_Bet1:
+		n.children = buildFCRAction(n, true)
+	case h_Bet2:
+		n.children = buildFCRAction(n, true)
+	case h_Bet3:
+		n.children = buildFCRAction(n, true)
+
+	case h_Raise1:
+		n.children = buildFCRAction(n, true)
+	case h_Raise2:
+		n.children = buildFCRAction(n, true)
+
+	case h_AllIn:
+		n.children = buildFCRAction(n, false)
+
+	case h_CheckBack:
+		if n.parent.Stage == Flop || n.parent.Stage == Turn {
+			n.children = buildChanceNode(n)
+		} else {
+			n.children = buildFCRAction(n, false)
+		}
+
+	case h_Call:
+		if n.parent.Stage == Flop || n.parent.Stage == Turn {
+			n.children = buildChanceNode(n)
+		} else {
+			n.children = buildFCRAction(n, false)
+		}
 	}
 
 	// Case check
@@ -606,7 +642,7 @@ func isOverThreasholdRaise(parent *PokerNode, choice float64) bool {
 func buildFCRAction(parent *PokerNode, includeRaise bool) []PokerNode {
 	var result []PokerNode
 
-	// This is only after open check
+	// FC or FCR node
 	choices := []string{h_Fold, h_Call}
 	bets := []float64{0, 0}
 
@@ -653,12 +689,25 @@ func buildFCRAction(parent *PokerNode, includeRaise bool) []PokerNode {
 				for index, choice := range constants.IPTurnRaises {
 					switch index {
 					case 0:
-						choices = append(choices, h_Bet1)
-						bets = append(bets, choice)
+						if isOverThreasholdRaise(parent, choice) {
+							choices = append(choices, h_AllIn)
+							bets = append(bets, float64(parent.EffectiveSize))
+							break
+						} else {
+
+							choices = append(choices, h_Raise1)
+							bets = append(bets, choice)
+						}
 
 					case 1:
-						choices = append(choices, h_Bet2)
-						bets = append(bets, choice)
+						if isOverThreasholdRaise(parent, choice) {
+							choices = append(choices, h_AllIn)
+							bets = append(bets, float64(parent.EffectiveSize))
+							break
+						} else {
+							choices = append(choices, h_Raise2)
+							bets = append(bets, choice)
+						}
 					}
 				}
 
@@ -666,15 +715,24 @@ func buildFCRAction(parent *PokerNode, includeRaise bool) []PokerNode {
 				for index, choice := range constants.IPRiverRaises {
 					switch index {
 					case 0:
-						choices = append(choices, h_Bet1)
-						bets = append(bets, choice)
+						if isOverThreasholdRaise(parent, choice) {
+							choices = append(choices, h_AllIn)
+							bets = append(bets, float64(parent.EffectiveSize))
+							break
+						} else {
+							choices = append(choices, h_Raise1)
+							bets = append(bets, choice)
+						}
 
 					case 1:
-						choices = append(choices, h_Bet2)
-						bets = append(bets, choice)
-					case 2:
-						choices = append(choices, h_Bet3)
-						bets = append(bets, choice)
+						if isOverThreasholdRaise(parent, choice) {
+							choices = append(choices, h_AllIn)
+							bets = append(bets, float64(parent.EffectiveSize))
+							break
+						} else {
+							choices = append(choices, h_Raise2)
+							bets = append(bets, choice)
+						}
 					}
 				}
 			}
@@ -700,7 +758,38 @@ func buildFCRAction(parent *PokerNode, includeRaise bool) []PokerNode {
 }
 
 func buildChanceNode(parent *PokerNode) (result []PokerNode) {
-	// ...
+	var results []PokerNode
+
+	allPossibleCards := deck.MakeDeck()
+	validCards := []string{}
+
+	for _, c := range allPossibleCards {
+		if !utils.Contains(parent.Board, c) {
+			validCards = append(validCards, c)
+		}
+	}
+
+	for _, newCard := range validCards {
+		for _, hand := range handsOOP {
+			// Card not on the board
+			if !utils.Contains(parent.Board, hand.Cards[0]) && !utils.Contains(parent.Board, hand.Cards[1]) && !utils.Contains(parent.Board, newCard) {
+
+				child := PokerNode{
+					parent:  parent,
+					player:  chance,
+					history: parent.history + h_Chance,
+					p0Card:  hand,
+
+					PotSize:       parent.PotSize,
+					EffectiveSize: parent.EffectiveSize,
+					RaiseLevel:    parent.RaiseLevel,
+					Board:         append(parent.Board, newCard),
+				}
+
+				results = append(results, child)
+			}
+		}
+	}
 
 	return
 }
