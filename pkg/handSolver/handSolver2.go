@@ -453,6 +453,7 @@ func HandSolver2(arr []string, safe bool) int {
 		}
 	}
 
+	// FIX ME
 	var multiplier int = 1e9
 	returnValue := 100_000_000_000 + (bestPair * 1e9)
 	for i := 0; i < 5; i++ {

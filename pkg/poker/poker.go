@@ -2,13 +2,17 @@ package poker
 
 import (
 	"encoding"
+	"fmt"
 	"io"
-	"math/rand"
 	"pokersolver/pkg/constants"
 	"pokersolver/pkg/deck"
 	"pokersolver/pkg/handSolver"
 	"pokersolver/pkg/ranges"
 	"pokersolver/pkg/utils"
+	"sort"
+	"strings"
+
+	"github.com/timpalpant/go-cfr"
 )
 
 // NodeType is the type of node in an extensive-form game tree.
@@ -51,6 +55,32 @@ const (
 	h_Fold      = "f"
 	h_Call      = "k"
 )
+
+var MemoMap = map[string]int{}
+
+func getMemoValue(array []string) int {
+	sorted := sort.StringSlice(array)
+	final := ""
+	for i := range sorted {
+		final += sorted[i]
+	}
+
+	if val, ok := MemoMap[final]; ok {
+		return val
+	} else {
+		MemoMap[final] = handSolver.HandSolver2(sorted, false)
+		return MemoMap[final]
+	}
+}
+
+var deckChannel = make(chan []string, 1e7)
+
+func RunDeckChannel() {
+	for {
+		deck := deck.MakeDeck()
+		deckChannel <- deck
+	}
+}
 
 // InfoSet is the observable game history from the point of view of one player.
 type InfoSet interface {
@@ -123,13 +153,24 @@ type GameTreeNode interface {
 var matrixOOP = constants.MatrixOOP
 var matrixIP = constants.MatrixIp
 
-var handsOOP = ranges.RangeToVector(matrixOOP)
-var handsIP = ranges.RangeToVector(matrixIP)
+// var handsOOP = ranges.RangeToVector(matrixOOP)
+// var handsIP = ranges.RangeToVector(matrixIP)
+
+var handsOOP = []ranges.Hand{ranges.Hand{
+	Cards:     []string{"Ac", "Tc"},
+	Frequency: 100,
+}}
+var handsIP = []ranges.Hand{ranges.Hand{
+	Cards:     []string{"Ad", "2c"},
+	Frequency: 100,
+}}
+
+// FIX ME: Maybe just give one hand at any iteration ?
 
 type PokerNode struct {
 	parent        *PokerNode
 	player        int
-	children      []PokerNode
+	children      []*PokerNode
 	probabilities []float64
 	history       string
 
@@ -145,24 +186,35 @@ type PokerNode struct {
 
 	// Stage
 	Stage NodeStage
+
+	// From Kunh
+	RegretSum   []float32
+	StrategySum []float32
+	Strategy    []float32
+	ReachPr     float32
+	ReachPrSum  float32
 }
 
 func NewGame() *PokerNode {
+
 	return &PokerNode{
 		player:     chance,
 		PotSize:    constants.Pot,
 		Board:      constants.Board,
 		RaiseLevel: 0,
 		Stage:      Flop,
-		history:    h_Chance,
+		history:    h_RootNode,
 	}
 }
-
-// string ?
 
 func (n *PokerNode) Close() {
 	n.children = nil
 	n.probabilities = nil
+}
+
+// Player implements *PokerNode.
+func (n *PokerNode) Player() int {
+	return n.player
 }
 
 func (n *PokerNode) NumChildren() int {
@@ -178,7 +230,11 @@ func (n *PokerNode) GetChild(i int) *PokerNode {
 		n.buildChildren()
 	}
 
-	return &n.children[i]
+	return n.children[i]
+}
+
+func (n *PokerNode) Parent() *PokerNode {
+	return n.parent
 }
 
 func (n *PokerNode) GetChildProbability(i int) float64 {
@@ -189,13 +245,7 @@ func (n *PokerNode) GetChildProbability(i int) float64 {
 	return n.probabilities[i]
 }
 
-// SampleChild implements cfr.GameTreeNode.
-func (n *PokerNode) SampleChild() (*PokerNode, float64) {
-	i := rand.Intn(n.NumChildren())
-	return n.GetChild(i), n.GetChildProbability(i)
-}
-
-// Type implements cfr.GameTreeNode.
+// Type implements *PokerNode.
 func (n *PokerNode) Type() NodeType {
 	if n.IsTerminal() {
 		return TerminalNodeType
@@ -220,23 +270,25 @@ func (n *PokerNode) IsTerminal() bool {
 		return false
 	}
 
-	lastAction := n.history[len(n.history)-1]
-	if lastAction == 'f' {
+	lastAction := n.history[len(n.history)-1:]
+	if lastAction == h_Fold {
 		return true
 	}
 
-	if len(n.history) > 1 {
-		allInSituation := n.history[len(n.history)-2:]
-		if allInSituation == "ac" || allInSituation == "af" {
+	if len(n.history) > 2 {
+
+		areWeAllIn := n.history[len(n.history)-2 : len(n.history)-1]
+		if areWeAllIn == h_AllIn {
 			return true
 		}
 	}
 
-	if n.Stage == River {
-		lastAction := n.history[len(n.history)-1]
-		if lastAction == 'f' || lastAction == 'c' {
-			return true
-		}
+	if (n.Stage == River) && (lastAction == h_CheckBack) {
+		return true
+	}
+
+	if (n.Stage == River) && (lastAction == h_Call) {
+		return true
 	}
 
 	return false
@@ -250,7 +302,9 @@ func (n *PokerNode) Utility(player int) float64 {
 	// turn it would be (i.e. not the last acting player).
 
 	var isShowdown bool
-	if n.history[len(n.history)-1] == 'f' {
+	lastAction := n.history[len(n.history)-1:]
+
+	if lastAction == h_Fold {
 		isShowdown = false
 	} else {
 		isShowdown = true
@@ -262,6 +316,7 @@ func (n *PokerNode) Utility(player int) float64 {
 		} else {
 			// FIX ME
 			// return -float64(n.PotSize) * opponent or hero card frequency
+			// Also increase pot size on bets ?
 			return -float64(n.PotSize)
 		}
 	}
@@ -271,10 +326,10 @@ func (n *PokerNode) Utility(player int) float64 {
 	// River situation
 	if n.Stage == River {
 		playerFinalhand := append(constants.Board, cardPlayer.Cards...)
-		playerHandValue := handSolver.HandSolver2(playerFinalhand, false)
+		playerHandValue := getMemoValue(playerFinalhand)
 
 		opponentFinalHand := append(constants.Board, cardOpponent.Cards...)
-		opponentHandValue := handSolver.HandSolver2(opponentFinalHand, false)
+		opponentHandValue := getMemoValue(opponentFinalHand)
 
 		if playerHandValue > opponentHandValue {
 			return float64(n.PotSize)
@@ -294,15 +349,22 @@ func (n *PokerNode) Utility(player int) float64 {
 
 	var averagePlayerWinnings float64
 
+	if len(n.Board) > 4 {
+		panic("tooooo big board, something went wrong")
+	}
+
 	// FIX ME : memoization
 	for i := 0; i < constants.AllInSamplesize; i++ {
 		fullBoard := getFullBoard(n.Board, cardPlayer.Cards, cardOpponent.Cards)
 
 		playerFinalhand := append(fullBoard, cardPlayer.Cards...)
-		playerHandValue := handSolver.HandSolver2(playerFinalhand, false)
+		playerHandValue := getMemoValue(playerFinalhand)
+
+		// FIX ME: bad inputs
 
 		opponentFinalHand := append(fullBoard, cardOpponent.Cards...)
-		opponentHandValue := handSolver.HandSolver2(opponentFinalHand, false)
+
+		opponentHandValue := getMemoValue(opponentFinalHand)
 
 		if playerHandValue > opponentHandValue {
 			cumulativePlayerWinnings += float64(n.PotSize)
@@ -322,7 +384,8 @@ func (n *PokerNode) Utility(player int) float64 {
 
 func getFullBoard(currentBoard, player, opponent []string) []string {
 	// FIX ME : optimize with get all 30? boards in one time ?
-	deck := deck.MakeDeck()
+	// deck := deck.MakeDeck()
+	deck := <-deckChannel
 	cardsOut := append(append(currentBoard, player...), opponent...) // Can be better ?
 
 	availableCards := []string{}
@@ -364,58 +427,153 @@ func uniformDist(n int) []float64 {
 	return result
 }
 
-// FIX ME: implement limit on nodes expanding
-var rundowns = constants.MaxRundowns
-
 func (n *PokerNode) buildChildren() {
+	if n.IsTerminal() {
+		n.children = nil
+		return
+	}
 	// Case chance node p0
 	previousAction := n.history[len(n.history)-1 : len(n.history)]
 	switch previousAction {
 	case h_RootNode:
-		n.children = buildP0Deals(n)
+		n.children = buildRootDeals(n)
+		nbActions := len(n.children)
+		n.RegretSum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.StrategySum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.Strategy = utils.FilledArrayFloat(nbActions, 1.0/float32(nbActions))
+		n.ReachPr = 0.0
+		n.ReachPrSum = 0.0
 		n.probabilities = uniformDist(len(n.children))
 
 	case h_P0Deal:
 		n.children = buildP1Deals(n)
+		nbActions := len(n.children)
+		n.RegretSum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.StrategySum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.Strategy = utils.FilledArrayFloat(nbActions, 1.0/float32(nbActions))
+		n.ReachPr = 0.0
+		n.ReachPrSum = 0.0
 		n.probabilities = uniformDist(len(n.children))
 
 	// Case new chance node
 	case h_p1Deal:
 		n.children = buildOpenAction(n)
+		nbActions := len(n.children)
+		n.RegretSum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.StrategySum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.Strategy = utils.FilledArrayFloat(nbActions, 1.0/float32(nbActions))
+		n.ReachPr = 0.0
+		n.ReachPrSum = 0.0
 
 	case h_Chance:
-		n.children = buildP1Deals(n)
+		n.children = buildP0Deals(n)
+		nbActions := len(n.children)
+		n.RegretSum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.StrategySum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.Strategy = utils.FilledArrayFloat(nbActions, 1.0/float32(nbActions))
+		n.ReachPr = 0.0
+		n.ReachPrSum = 0.0
 	case h_Check:
 		n.children = buildCBAction(n)
+		nbActions := len(n.children)
+		n.RegretSum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.StrategySum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.Strategy = utils.FilledArrayFloat(nbActions, 1.0/float32(nbActions))
+		n.ReachPr = 0.0
+		n.ReachPrSum = 0.0
 
 	// Bet and raise have to take into account if we are all in...
 	case h_Bet1:
 		n.children = buildFCRAction(n, true)
+		nbActions := len(n.children)
+		n.RegretSum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.StrategySum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.Strategy = utils.FilledArrayFloat(nbActions, 1.0/float32(nbActions))
+		n.ReachPr = 0.0
+		n.ReachPrSum = 0.0
 	case h_Bet2:
+
 		n.children = buildFCRAction(n, true)
+		nbActions := len(n.children)
+		n.RegretSum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.StrategySum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.Strategy = utils.FilledArrayFloat(nbActions, 1.0/float32(nbActions))
+		n.ReachPr = 0.0
+		n.ReachPrSum = 0.0
 	case h_Bet3:
+
 		n.children = buildFCRAction(n, true)
+		nbActions := len(n.children)
+		n.RegretSum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.StrategySum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.Strategy = utils.FilledArrayFloat(nbActions, 1.0/float32(nbActions))
+		n.ReachPr = 0.0
+		n.ReachPrSum = 0.0
 
 	case h_Raise1:
+
 		n.children = buildFCRAction(n, true)
+		nbActions := len(n.children)
+		n.RegretSum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.StrategySum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.Strategy = utils.FilledArrayFloat(nbActions, 1.0/float32(nbActions))
+		n.ReachPr = 0.0
+		n.ReachPrSum = 0.0
 	case h_Raise2:
+
 		n.children = buildFCRAction(n, true)
+		nbActions := len(n.children)
+		n.RegretSum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.StrategySum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.Strategy = utils.FilledArrayFloat(nbActions, 1.0/float32(nbActions))
+		n.ReachPr = 0.0
+		n.ReachPrSum = 0.0
 
 	case h_AllIn:
+
 		n.children = buildFCRAction(n, false)
+		nbActions := len(n.children)
+		n.RegretSum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.StrategySum = utils.FilledArrayFloat(nbActions, 0.0)
+		n.Strategy = utils.FilledArrayFloat(nbActions, 1.0/float32(nbActions))
+		n.ReachPr = 0.0
+		n.ReachPrSum = 0.0
 
 	case h_CheckBack:
 		if n.parent.Stage == Flop || n.parent.Stage == Turn {
+
 			n.children = buildChanceNode(n)
+			nbActions := len(n.children)
+			n.RegretSum = utils.FilledArrayFloat(nbActions, 0.0)
+			n.StrategySum = utils.FilledArrayFloat(nbActions, 0.0)
+			n.Strategy = utils.FilledArrayFloat(nbActions, 1.0/float32(nbActions))
+			n.ReachPr = 0.0
+			n.ReachPrSum = 0.0
+			n.probabilities = uniformDist(len(n.children))
+
 		} else {
-			n.children = buildFCRAction(n, false)
+
+			// FIX me !!!
+			fmt.Println("wowowowowowow")
+			// n.children = buildFCRAction(n, false)
+			n.children = nil
 		}
 
 	case h_Call:
 		if n.parent.Stage == Flop || n.parent.Stage == Turn {
+
 			n.children = buildChanceNode(n)
+			nbActions := len(n.children)
+			n.RegretSum = utils.FilledArrayFloat(nbActions, 0.0)
+			n.StrategySum = utils.FilledArrayFloat(nbActions, 0.0)
+			n.Strategy = utils.FilledArrayFloat(nbActions, 1.0/float32(nbActions))
+			n.ReachPr = 0.0
+			n.ReachPrSum = 0.0
 		} else {
-			n.children = buildFCRAction(n, false)
+			fmt.Println("wowowowowowow 2")
+
+			// n.children = buildFCRAction(n, false)
+			n.children = nil
 		}
 	}
 
@@ -427,40 +585,70 @@ func (n *PokerNode) buildChildren() {
 	// case allin
 }
 
-func buildP0Deals(parent *PokerNode) []PokerNode {
-	var results []PokerNode
+func buildRootDeals(parent *PokerNode) []*PokerNode {
+	var results []*PokerNode
 
 	for _, hand := range handsOOP {
 		// Card not on the board
 		if !utils.Contains(constants.Board, hand.Cards[0]) && !utils.Contains(constants.Board, hand.Cards[1]) {
 
-			child := PokerNode{
-				parent:  parent,
-				player:  chance,
-				history: h_P0Deal,
-				p0Card:  hand,
+			/*
+				child := &PokerNode{
+					parent:  parent,
+					player:  chance,
+					history: h_P0Deal,
+					p0Card:  hand,
 
-				PotSize:       constants.Pot,
-				EffectiveSize: constants.EffectiveStack,
-				RaiseLevel:    0,
-				Board:         constants.Board,
-			}
+					PotSize:       constants.Pot,
+					EffectiveSize: constants.EffectiveStack,
+					RaiseLevel:    0,
+					Board:         constants.Board,
+				}
 
-			results = append(results, child)
+				results = append(results, child)
+			*/
+
+			child := *parent
+			child.parent = parent
+			child.player = chance
+			child.p0Card = hand
+			child.history += h_P0Deal
+
+			results = append(results, &child)
 		}
 	}
 
 	return results
 }
 
-func buildP1Deals(parent *PokerNode) []PokerNode {
-	var results []PokerNode
+func buildP0Deals(parent *PokerNode) []*PokerNode {
+	var results []*PokerNode
+
+	for _, hand := range handsOOP {
+		// Card not on the board
+		if !utils.Contains(constants.Board, hand.Cards[0]) && !utils.Contains(constants.Board, hand.Cards[1]) {
+
+			child := *parent
+			child.parent = parent
+			child.player = chance
+			child.p0Card = hand
+			child.history += h_P0Deal
+
+			results = append(results, &child)
+		}
+	}
+
+	return results
+}
+
+func buildP1Deals(parent *PokerNode) []*PokerNode {
+	var results []*PokerNode
 
 	for _, hand := range handsIP {
 		// Card not on the board
 
 		// FIX ME: remove properly duplicates between two players
-		if !utils.Contains(constants.Board, hand.Cards[0]) && !utils.Contains(constants.Board, hand.Cards[1]) {
+		if !utils.Contains(constants.Board, hand.Cards[0]) && !utils.Contains(constants.Board, hand.Cards[1]) && !utils.Contains(constants.Board, parent.p0Card.Cards[0]) && !utils.Contains(constants.Board, parent.p0Card.Cards[1]) {
 
 			child := *parent
 			child.parent = parent
@@ -468,15 +656,15 @@ func buildP1Deals(parent *PokerNode) []PokerNode {
 			child.p1Card = hand
 			child.history += h_p1Deal
 
-			results = append(results, child)
+			results = append(results, &child)
 		}
 	}
 
 	return results
 }
 
-func buildOpenAction(parent *PokerNode) []PokerNode {
-	var result []PokerNode
+func buildOpenAction(parent *PokerNode) []*PokerNode {
+	var result []*PokerNode
 
 	// First to act, action is check and different betsizes
 	choices := []string{h_Check}
@@ -545,7 +733,7 @@ func buildOpenAction(parent *PokerNode) []PokerNode {
 
 		child.PotSize += int(addToPotSize)
 
-		result = append(result, child)
+		result = append(result, &child)
 
 	}
 
@@ -553,8 +741,8 @@ func buildOpenAction(parent *PokerNode) []PokerNode {
 }
 
 // FIX ME: Bet size with threashold etc
-func buildCBAction(parent *PokerNode) []PokerNode {
-	var result []PokerNode
+func buildCBAction(parent *PokerNode) []*PokerNode {
+	var result []*PokerNode
 
 	// This is only after open check
 	choices := []string{h_CheckBack}
@@ -623,7 +811,7 @@ func buildCBAction(parent *PokerNode) []PokerNode {
 
 		child.PotSize += int(addToPotSize)
 
-		result = append(result, child)
+		result = append(result, &child)
 
 	}
 
@@ -639,8 +827,8 @@ func isOverThreasholdRaise(parent *PokerNode, choice float64) bool {
 	return potentialRaise+float64(parent.EffectiveSize) >= float64(parent.EffectiveSize)*constants.Threashold
 }
 
-func buildFCRAction(parent *PokerNode, includeRaise bool) []PokerNode {
-	var result []PokerNode
+func buildFCRAction(parent *PokerNode, includeRaise bool) []*PokerNode {
+	var result []*PokerNode
 
 	// FC or FCR node
 	choices := []string{h_Fold, h_Call}
@@ -664,7 +852,7 @@ func buildFCRAction(parent *PokerNode, includeRaise bool) []PokerNode {
 				for index, choice := range constants.IPFlopRaises {
 					switch index {
 					case 0:
-						if isOverThreasholdRaise(parent, choice) {
+						if isOverThreasholdRaise(parent, choice) || parent.RaiseLevel == constants.MaxRaises {
 							choices = append(choices, h_AllIn)
 							bets = append(bets, float64(parent.EffectiveSize))
 							break
@@ -674,7 +862,7 @@ func buildFCRAction(parent *PokerNode, includeRaise bool) []PokerNode {
 						}
 
 					case 1:
-						if isOverThreasholdRaise(parent, choice) {
+						if isOverThreasholdRaise(parent, choice) || parent.RaiseLevel == constants.MaxRaises {
 							choices = append(choices, h_AllIn)
 							bets = append(bets, float64(parent.EffectiveSize))
 							break
@@ -689,7 +877,7 @@ func buildFCRAction(parent *PokerNode, includeRaise bool) []PokerNode {
 				for index, choice := range constants.IPTurnRaises {
 					switch index {
 					case 0:
-						if isOverThreasholdRaise(parent, choice) {
+						if isOverThreasholdRaise(parent, choice) || parent.RaiseLevel == constants.MaxRaises {
 							choices = append(choices, h_AllIn)
 							bets = append(bets, float64(parent.EffectiveSize))
 							break
@@ -700,7 +888,7 @@ func buildFCRAction(parent *PokerNode, includeRaise bool) []PokerNode {
 						}
 
 					case 1:
-						if isOverThreasholdRaise(parent, choice) {
+						if isOverThreasholdRaise(parent, choice) || parent.RaiseLevel == constants.MaxRaises {
 							choices = append(choices, h_AllIn)
 							bets = append(bets, float64(parent.EffectiveSize))
 							break
@@ -715,7 +903,7 @@ func buildFCRAction(parent *PokerNode, includeRaise bool) []PokerNode {
 				for index, choice := range constants.IPRiverRaises {
 					switch index {
 					case 0:
-						if isOverThreasholdRaise(parent, choice) {
+						if isOverThreasholdRaise(parent, choice) || parent.RaiseLevel == constants.MaxRaises {
 							choices = append(choices, h_AllIn)
 							bets = append(bets, float64(parent.EffectiveSize))
 							break
@@ -725,7 +913,85 @@ func buildFCRAction(parent *PokerNode, includeRaise bool) []PokerNode {
 						}
 
 					case 1:
-						if isOverThreasholdRaise(parent, choice) {
+						if isOverThreasholdRaise(parent, choice) || parent.RaiseLevel == constants.MaxRaises {
+							choices = append(choices, h_AllIn)
+							bets = append(bets, float64(parent.EffectiveSize))
+							break
+						} else {
+							choices = append(choices, h_Raise2)
+							bets = append(bets, choice)
+						}
+					}
+				}
+			}
+		} else {
+			switch stage {
+			case Flop:
+				for index, choice := range constants.OOPFlopRaises {
+					switch index {
+					case 0:
+						if isOverThreasholdRaise(parent, choice) || parent.RaiseLevel == constants.MaxRaises {
+							choices = append(choices, h_AllIn)
+							bets = append(bets, float64(parent.EffectiveSize))
+							break
+						} else {
+							choices = append(choices, h_Raise1)
+							bets = append(bets, choice)
+						}
+
+					case 1:
+						if isOverThreasholdRaise(parent, choice) || parent.RaiseLevel == constants.MaxRaises {
+							choices = append(choices, h_AllIn)
+							bets = append(bets, float64(parent.EffectiveSize))
+							break
+						} else {
+							choices = append(choices, h_Raise2)
+							bets = append(bets, choice)
+						}
+					}
+				}
+
+			case Turn:
+				for index, choice := range constants.OOPTurnRaises {
+					switch index {
+					case 0:
+						if isOverThreasholdRaise(parent, choice) || parent.RaiseLevel == constants.MaxRaises {
+							choices = append(choices, h_AllIn)
+							bets = append(bets, float64(parent.EffectiveSize))
+							break
+						} else {
+
+							choices = append(choices, h_Raise1)
+							bets = append(bets, choice)
+						}
+
+					case 1:
+						if isOverThreasholdRaise(parent, choice) || parent.RaiseLevel == constants.MaxRaises {
+							choices = append(choices, h_AllIn)
+							bets = append(bets, float64(parent.EffectiveSize))
+							break
+						} else {
+							choices = append(choices, h_Raise2)
+							bets = append(bets, choice)
+						}
+					}
+				}
+
+			case River:
+				for index, choice := range constants.OOPRiverRaises {
+					switch index {
+					case 0:
+						if isOverThreasholdRaise(parent, choice) || parent.RaiseLevel == constants.MaxRaises {
+							choices = append(choices, h_AllIn)
+							bets = append(bets, float64(parent.EffectiveSize))
+							break
+						} else {
+							choices = append(choices, h_Raise1)
+							bets = append(bets, choice)
+						}
+
+					case 1:
+						if isOverThreasholdRaise(parent, choice) || parent.RaiseLevel == constants.MaxRaises {
 							choices = append(choices, h_AllIn)
 							bets = append(bets, float64(parent.EffectiveSize))
 							break
@@ -745,23 +1011,33 @@ func buildFCRAction(parent *PokerNode, includeRaise bool) []PokerNode {
 
 		child := *parent
 		child.parent = parent
-		child.player = player0
+		child.player = player
 		child.history += choice
 
 		child.PotSize += int(addToPotSize)
 
-		result = append(result, child)
+		result = append(result, &child)
 
 	}
 
 	return result
 }
 
-func buildChanceNode(parent *PokerNode) (result []PokerNode) {
-	var results []PokerNode
+func buildChanceNode(parent *PokerNode) []*PokerNode {
+	var results []*PokerNode
 
-	allPossibleCards := deck.MakeDeck()
+	// allPossibleCards := deck.MakeDeck()
+	allPossibleCards := <-deckChannel
 	validCards := []string{}
+
+	// FIX ME: not sure
+	var player int
+
+	if parent.player == player0 {
+		player = player1
+	} else {
+		player = player0
+	}
 
 	for _, c := range allPossibleCards {
 		if !utils.Contains(parent.Board, c) {
@@ -769,29 +1045,88 @@ func buildChanceNode(parent *PokerNode) (result []PokerNode) {
 		}
 	}
 
-	for _, newCard := range validCards {
-		for _, hand := range handsOOP {
-			// Card not on the board
-			if !utils.Contains(parent.Board, hand.Cards[0]) && !utils.Contains(parent.Board, hand.Cards[1]) && !utils.Contains(parent.Board, newCard) {
-
-				child := PokerNode{
-					parent:  parent,
-					player:  chance,
-					history: parent.history + h_Chance,
-					p0Card:  hand,
-
-					PotSize:       parent.PotSize,
-					EffectiveSize: parent.EffectiveSize,
-					RaiseLevel:    parent.RaiseLevel,
-					Board:         append(parent.Board, newCard),
-				}
-
-				results = append(results, child)
-			}
-		}
+	if len(validCards) > constants.MaxChanceNodes {
+		validCards = validCards[0:constants.MaxChanceNodes]
 	}
 
-	return
+	for _, newCard := range validCards {
+		// Card not on the board
+
+		var newNodeStage NodeStage
+		if parent.Stage == Flop {
+			newNodeStage = Turn
+		} else if parent.Stage == Turn {
+			newNodeStage = River
+		} else {
+			panic("Wrong chance node I think... I am sure !")
+		}
+
+		/*
+
+			child := PokerNode{
+				parent:  parent,
+				player:  player,
+				history: parent.history + h_Chance,
+				p0Card:  hand,
+
+				PotSize:       parent.PotSize,
+				EffectiveSize: parent.EffectiveSize,
+				RaiseLevel:    parent.RaiseLevel,
+				Board:         append(parent.Board, newCard),
+				Stage:         newNodeStage,
+			}
+
+		*/
+
+		child := *parent
+		child.player = player
+		child.history = parent.history + h_Chance
+		child.Board = append(parent.Board, newCard)
+		child.Stage = newNodeStage
+
+		results = append(results, &child)
+	}
+
+	return results
+}
+
+// --------------------------
+
+type pokerInfoSet struct {
+	history string
+	card    string
+}
+
+func (p pokerInfoSet) Key() []byte {
+	return []byte(p.history + "-" + p.card)
+}
+
+func (p pokerInfoSet) MarshalBinary() ([]byte, error) {
+	return p.Key(), nil
+}
+
+func (p *pokerInfoSet) UnmarshalBinary(buf []byte) error {
+	parts := strings.SplitN(string(buf), "-", 1)
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid binary poker info set: %v", parts)
+	}
+
+	p.history = parts[0]
+	p.card = parts[1]
+	return nil
+}
+
+// InfoSet implements *PokerNode.
+func (n *PokerNode) InfoSet(player int) cfr.InfoSet {
+	cardString := n.playerCard(player).Cards[0] + n.playerCard(player).Cards[1]
+	return &pokerInfoSet{
+		history: n.history,
+		card:    cardString,
+	}
+}
+
+func (n *PokerNode) InfoSetKey(player int) []byte {
+	return n.InfoSet(player).Key()
 }
 
 // ----------------------------------------------------------

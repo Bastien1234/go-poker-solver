@@ -7,27 +7,27 @@ var Pot int = 75
 var EffectiveStack int = 450
 var Threashold float64 = 0.6
 var AllInSamplesize = 50
-var MaxRundowns = 200
+var MaxChanceNodes = 1200
 
-var Board []string = []string{"Ah", "7d", "5h", "7h", "Ts"}
+var Board []string = []string{"Ah", "7d", "5h"}
 var Hero []string = []string{"Kh", "kd"}
 var HeroPosition string = "ip"
 
 // Strategies
 var OOPFlopBets = []float64{0.25, 0.75}
-var IPFlopBets = []float64{0.25, 0.75}
-var OOPFlopRaises = []float64{2.5}
-var IPFlopRaises = []float64{2.5}
+var IPFlopBets = []float64{0.25, 0.75, 1.2}
+var OOPFlopRaises = []float64{3}
+var IPFlopRaises = []float64{3}
 
-var OOPTurnBets = []float64{0.25, 0.75}
-var IPTurnBets = []float64{0.25, 0.75}
-var OOPTurnRaises = []float64{2.5}
-var IPTurnRaises = []float64{2.5}
+var OOPTurnBets = []float64{0.75, 1.2}
+var IPTurnBets = []float64{0.75, 1.2}
+var OOPTurnRaises = []float64{3}
+var IPTurnRaises = []float64{3}
 
-var OOPRiverBets = []float64{0.25, 0.75}
-var IPRiverBets = []float64{0.25, 0.75}
-var OOPRiverRaises = []float64{2.5}
-var IPRiverRaises = []float64{2.5}
+var OOPRiverBets = []float64{0.75, 1.2}
+var IPRiverBets = []float64{0.75, 1.2}
+var OOPRiverRaises = []float64{3}
+var IPRiverRaises = []float64{3}
 
 /*
 var MatrixOOP = [][]int{

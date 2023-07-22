@@ -2,17 +2,16 @@ package main
 
 import (
 	"fmt"
-	"pokersolver/pkg/million"
+	"pokersolver/pkg/cfr"
 	"pokersolver/pkg/poker"
-
-	"github.com/timpalpant/go-cfr"
+	"time"
 	// "pokersolver/pkg/utils"
 )
 
 func main() {
 	// solver.NashSolver()
 
-	million.SolveOneMillion(1000000, true)
+	// million.SolveOneMillion(1000000, true)
 
 	// ev := []int{500, 25, -1000, 100}
 	// frequencies := []int{0, 0, 100, 0}
@@ -22,15 +21,47 @@ func main() {
 
 	// fmt.Println(frequencies)
 
+	start := time.Now()
+	go poker.RunDeckChannel()
+
 	poker := poker.NewGame()
-	policy := cfr.NewPolicyTable(cfr.DiscountParams{UseRegretMatchingPlus: true})
-	vanillaCFR := cfr.New(policy)
-	nIter := 50000
+	vanillaCFR := cfr.New()
+	nIter := 10000
 	expectedValue := float32(0.0)
 	for i := 1; i <= nIter; i++ {
-		expectedValue += vanillaCFR.Run(poker)
+		if i%10000 == 0 {
+			fmt.Printf("Starting iteration : %d\n", i)
+			expectedValue += vanillaCFR.Run(poker)
+		}
 	}
 
 	expectedValue /= float32(nIter)
 	fmt.Printf("Expected value is: %v\n", expectedValue)
+
+	elapsed := time.Since(start)
+
+	fmt.Printf("Did %d iterations in %s\n", nIter, elapsed)
+	/*
+		seen := make(map[string]struct{})
+		tree.Visit(poker, func(node cfr.GameTreeNode) {
+			if node.Type() != cfr.PlayerNodeType {
+				return
+			}
+
+			key := node.InfoSet(node.Player()).Key()
+			if _, ok := seen[string(key)]; ok {
+				return
+			}
+
+			actionProbs := policy.GetPolicy(node).GetAverageStrategy()
+			if actionProbs != nil {
+				fmt.Printf("[player %d] %6s: \n", node.Player(), key)
+				for _, a := range actionProbs {
+					fmt.Printf("%f\n", a)
+				}
+			}
+
+			seen[string(key)] = struct{}{}
+		})
+	*/
 }
