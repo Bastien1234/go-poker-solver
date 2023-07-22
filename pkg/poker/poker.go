@@ -172,7 +172,7 @@ type PokerNode struct {
 	player        int
 	children      []*PokerNode
 	probabilities []float64
-	history       string
+	History       string
 
 	// Hands held by either players
 	p0Card, p1Card ranges.Hand
@@ -203,7 +203,7 @@ func NewGame() *PokerNode {
 		Board:      constants.Board,
 		RaiseLevel: 0,
 		Stage:      Flop,
-		history:    h_RootNode,
+		History:    h_RootNode,
 	}
 }
 
@@ -266,18 +266,18 @@ func (n *PokerNode) IsTerminal() bool {
 	*/
 
 	// FIX ME because I'm not sure
-	if len(n.history) == 0 {
+	if len(n.History) == 0 {
 		return false
 	}
 
-	lastAction := n.history[len(n.history)-1:]
+	lastAction := n.History[len(n.History)-1:]
 	if lastAction == h_Fold {
 		return true
 	}
 
-	if len(n.history) > 2 {
+	if len(n.History) > 2 {
 
-		areWeAllIn := n.history[len(n.history)-2 : len(n.history)-1]
+		areWeAllIn := n.History[len(n.History)-2 : len(n.History)-1]
 		if areWeAllIn == h_AllIn {
 			return true
 		}
@@ -302,7 +302,7 @@ func (n *PokerNode) Utility(player int) float64 {
 	// turn it would be (i.e. not the last acting player).
 
 	var isShowdown bool
-	lastAction := n.history[len(n.history)-1:]
+	lastAction := n.History[len(n.History)-1:]
 
 	if lastAction == h_Fold {
 		isShowdown = false
@@ -433,7 +433,7 @@ func (n *PokerNode) buildChildren() {
 		return
 	}
 	// Case chance node p0
-	previousAction := n.history[len(n.history)-1 : len(n.history)]
+	previousAction := n.History[len(n.History)-1 : len(n.History)]
 	switch previousAction {
 	case h_RootNode:
 		n.children = buildRootDeals(n)
@@ -592,29 +592,29 @@ func buildRootDeals(parent *PokerNode) []*PokerNode {
 		// Card not on the board
 		if !utils.Contains(constants.Board, hand.Cards[0]) && !utils.Contains(constants.Board, hand.Cards[1]) {
 
+			child := &PokerNode{
+				parent:  parent,
+				player:  chance,
+				History: h_P0Deal,
+				p0Card:  hand,
+
+				PotSize:       constants.Pot,
+				EffectiveSize: constants.EffectiveStack,
+				RaiseLevel:    0,
+				Board:         constants.Board,
+			}
+
+			results = append(results, child)
+
 			/*
-				child := &PokerNode{
-					parent:  parent,
-					player:  chance,
-					history: h_P0Deal,
-					p0Card:  hand,
+				child := *parent
+				child.parent = parent
+				child.player = chance
+				child.p0Card = hand
+				child.history += h_P0Deal
 
-					PotSize:       constants.Pot,
-					EffectiveSize: constants.EffectiveStack,
-					RaiseLevel:    0,
-					Board:         constants.Board,
-				}
-
-				results = append(results, child)
+				results = append(results, &child)
 			*/
-
-			child := *parent
-			child.parent = parent
-			child.player = chance
-			child.p0Card = hand
-			child.history += h_P0Deal
-
-			results = append(results, &child)
 		}
 	}
 
@@ -632,7 +632,7 @@ func buildP0Deals(parent *PokerNode) []*PokerNode {
 			child.parent = parent
 			child.player = chance
 			child.p0Card = hand
-			child.history += h_P0Deal
+			child.History += h_P0Deal
 
 			results = append(results, &child)
 		}
@@ -654,7 +654,7 @@ func buildP1Deals(parent *PokerNode) []*PokerNode {
 			child.parent = parent
 			child.player = player0
 			child.p1Card = hand
-			child.history += h_p1Deal
+			child.History += h_p1Deal
 
 			results = append(results, &child)
 		}
@@ -729,7 +729,7 @@ func buildOpenAction(parent *PokerNode) []*PokerNode {
 		child := *parent
 		child.parent = parent
 		child.player = player1
-		child.history += choice
+		child.History += choice
 
 		child.PotSize += int(addToPotSize)
 
@@ -807,7 +807,7 @@ func buildCBAction(parent *PokerNode) []*PokerNode {
 		child := *parent
 		child.parent = parent
 		child.player = player0
-		child.history += choice
+		child.History += choice
 
 		child.PotSize += int(addToPotSize)
 
@@ -1012,7 +1012,7 @@ func buildFCRAction(parent *PokerNode, includeRaise bool) []*PokerNode {
 		child := *parent
 		child.parent = parent
 		child.player = player
-		child.history += choice
+		child.History += choice
 
 		child.PotSize += int(addToPotSize)
 
@@ -1080,7 +1080,7 @@ func buildChanceNode(parent *PokerNode) []*PokerNode {
 
 		child := *parent
 		child.player = player
-		child.history = parent.history + h_Chance
+		child.History = parent.History + h_Chance
 		child.Board = append(parent.Board, newCard)
 		child.Stage = newNodeStage
 
@@ -1120,7 +1120,7 @@ func (p *pokerInfoSet) UnmarshalBinary(buf []byte) error {
 func (n *PokerNode) InfoSet(player int) cfr.InfoSet {
 	cardString := n.playerCard(player).Cards[0] + n.playerCard(player).Cards[1]
 	return &pokerInfoSet{
-		history: n.history,
+		history: n.History,
 		card:    cardString,
 	}
 }

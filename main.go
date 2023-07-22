@@ -26,12 +26,15 @@ func main() {
 
 	poker := poker.NewGame()
 	vanillaCFR := cfr.New()
-	nIter := 10000
+	nIter := 100000
 	expectedValue := float32(0.0)
 	for i := 1; i <= nIter; i++ {
 		if i%10000 == 0 {
 			fmt.Printf("Starting iteration : %d\n", i)
 			expectedValue += vanillaCFR.Run(poker)
+			for _, node := range vanillaCFR.Strategy {
+				node.UpdateStrategy()
+			}
 		}
 	}
 

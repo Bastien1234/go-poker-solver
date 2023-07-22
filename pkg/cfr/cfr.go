@@ -19,10 +19,95 @@ func New(strategyProfile StrategyProfile) *CFR {
 }
 */
 
-type CFR struct{}
+type NodeStrategy struct {
+	RegretSum   []float32
+	StrategySum []float32
+	Strategy    []float32
+	ReachPr     float32
+	ReachPrSum  float32
+}
+
+func NewNodeStrategy(nbActions int) *NodeStrategy {
+	n := &NodeStrategy{
+		RegretSum:   utils.FilledArrayFloat(nbActions, 0.0),
+		StrategySum: utils.FilledArrayFloat(nbActions, 0.0),
+		Strategy:    utils.FilledArrayFloat(nbActions, 1.0/float32(nbActions)),
+		ReachPr:     0.0,
+		ReachPrSum:  0.0,
+	}
+
+	return n
+}
+
+type CFR struct {
+	Strategy map[string]*NodeStrategy
+}
+
+func (cfr *CFR) GetNodeStrategy(history string, nbActions int) *NodeStrategy {
+
+	val, ok := cfr.Strategy[history]
+	if ok {
+		return val
+
+	} else {
+		cfr.Strategy[history] = NewNodeStrategy(nbActions)
+		return cfr.Strategy[history]
+	}
+}
+
+func (n *NodeStrategy) GetStrategy() []float32 {
+	regrets := n.RegretSum
+	var normalizingSum float32 = 0.0
+
+	for _, el := range regrets {
+
+		normalizingSum += el
+	}
+
+	if normalizingSum > 0.0 {
+		for index := range regrets {
+			regrets[index] = regrets[index] / normalizingSum
+		}
+
+		return regrets
+	}
+
+	yeahDefaultList := utils.FilledArrayFloat(len(regrets), 1.0/float32(len(regrets)))
+
+	return yeahDefaultList
+}
+
+func (n *NodeStrategy) UpdateStrategy() {
+	for index := range n.StrategySum {
+		n.StrategySum[index] += n.ReachPr * n.Strategy[index]
+	}
+
+	n.ReachPrSum += n.ReachPr
+
+	n.Strategy = n.GetStrategy()
+
+	n.ReachPr = 0.0
+}
+
+func (n *NodeStrategy) GetAverageStrategy() []float32 {
+	strategy := n.StrategySum
+	var totalFloat float32 = 0.0
+	for i := range strategy {
+		strategy[i] = strategy[i] / n.ReachPrSum
+		totalFloat += strategy[i]
+	}
+
+	for i := range strategy {
+		strategy[i] /= totalFloat
+	}
+
+	return strategy
+}
 
 func New() *CFR {
-	return &CFR{}
+	return &CFR{
+		Strategy: map[string]*NodeStrategy{},
+	}
 }
 
 func (c *CFR) Run(node *poker.PokerNode) float32 {
@@ -66,7 +151,8 @@ func (c *CFR) handlePlayerNode(node *poker.PokerNode, reachP0, reachP1, reachCha
 	}
 
 	// policy := c.strategyProfile.GetPolicy(node)
-	strategy := node.Strategy
+	policy := c.GetNodeStrategy(node.History, nChildren)
+	strategy := policy.GetStrategy()
 	actionUtils := utils.FilledArrayFloat(nChildren, 0.0)
 
 	for i := 0; i < nChildren; i++ {
@@ -102,14 +188,14 @@ func (c *CFR) handlePlayerNode(node *poker.PokerNode, reachP0, reachP1, reachCha
 	}
 
 	if player == 0 {
-		node.ReachPr += reachP0
-		for i := range node.RegretSum {
-			node.RegretSum[i] += reachP1 * regrets[i]
+		policy.ReachPr += reachP0
+		for i := range policy.RegretSum {
+			policy.RegretSum[i] += reachP1 * regrets[i]
 		}
 	} else {
-		node.ReachPr += reachP1
-		for i := range node.RegretSum {
-			node.RegretSum[i] += reachP0 * regrets[i]
+		policy.ReachPr += reachP1
+		for i := range policy.RegretSum {
+			policy.RegretSum[i] += reachP0 * regrets[i]
 		}
 	}
 
