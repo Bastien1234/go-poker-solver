@@ -68,7 +68,7 @@ func getMemoValue(array []string) int {
 	if val, ok := MemoMap[final]; ok {
 		return val
 	} else {
-		MemoMap[final] = handSolver.HandSolver2(sorted, false)
+		MemoMap[final] = handSolver.HandSolver(sorted, true)
 		return MemoMap[final]
 	}
 }
@@ -149,22 +149,6 @@ type GameTreeNode interface {
 
 // ----------------------------------------------------------
 
-// Get ranges
-var matrixOOP = constants.MatrixOOP
-var matrixIP = constants.MatrixIp
-
-// var handsOOP = ranges.RangeToVector(matrixOOP)
-// var handsIP = ranges.RangeToVector(matrixIP)
-
-var handsOOP = []ranges.Hand{ranges.Hand{
-	Cards:     []string{"Ac", "Tc"},
-	Frequency: 100,
-}}
-var handsIP = []ranges.Hand{ranges.Hand{
-	Cards:     []string{"Ad", "2c"},
-	Frequency: 100,
-}}
-
 // FIX ME: Maybe just give one hand at any iteration ?
 
 type PokerNode struct {
@@ -196,6 +180,7 @@ type PokerNode struct {
 }
 
 func NewGame() *PokerNode {
+	handsOOP, handsIP := ranges.GetHands(constants.Board)
 
 	return &PokerNode{
 		player:     chance,
@@ -204,6 +189,8 @@ func NewGame() *PokerNode {
 		RaiseLevel: 0,
 		Stage:      Flop,
 		History:    h_RootNode,
+		p0Card:     handsOOP,
+		p1Card:     handsIP,
 	}
 }
 
@@ -325,10 +312,10 @@ func (n *PokerNode) Utility(player int) float64 {
 
 	// River situation
 	if n.Stage == River {
-		playerFinalhand := append(constants.Board, cardPlayer.Cards...)
+		playerFinalhand := append(n.Board, cardPlayer.Cards...)
 		playerHandValue := getMemoValue(playerFinalhand)
 
-		opponentFinalHand := append(constants.Board, cardOpponent.Cards...)
+		opponentFinalHand := append(n.Board, cardOpponent.Cards...)
 		opponentHandValue := getMemoValue(opponentFinalHand)
 
 		if playerHandValue > opponentHandValue {
@@ -588,35 +575,31 @@ func (n *PokerNode) buildChildren() {
 func buildRootDeals(parent *PokerNode) []*PokerNode {
 	var results []*PokerNode
 
-	for _, hand := range handsOOP {
-		// Card not on the board
-		if !utils.Contains(constants.Board, hand.Cards[0]) && !utils.Contains(constants.Board, hand.Cards[1]) {
+	hand := parent.p0Card
 
-			child := &PokerNode{
-				parent:  parent,
-				player:  chance,
-				History: h_P0Deal,
-				p0Card:  hand,
+	child := &PokerNode{
+		parent:  parent,
+		player:  chance,
+		History: parent.p0Card.Cards[0] + parent.p0Card.Cards[1] + "-" + parent.p0Card.Cards[0] + parent.p0Card.Cards[1] + "-" + h_P0Deal,
+		p0Card:  hand,
 
-				PotSize:       constants.Pot,
-				EffectiveSize: constants.EffectiveStack,
-				RaiseLevel:    0,
-				Board:         constants.Board,
-			}
-
-			results = append(results, child)
-
-			/*
-				child := *parent
-				child.parent = parent
-				child.player = chance
-				child.p0Card = hand
-				child.history += h_P0Deal
-
-				results = append(results, &child)
-			*/
-		}
+		PotSize:       constants.Pot,
+		EffectiveSize: constants.EffectiveStack,
+		RaiseLevel:    0,
+		Board:         constants.Board,
 	}
+
+	results = append(results, child)
+
+	/*
+		child := *parent
+		child.parent = parent
+		child.player = chance
+		child.p0Card = hand
+		child.history += h_P0Deal
+
+		results = append(results, &child)
+	*/
 
 	return results
 }
@@ -624,19 +607,15 @@ func buildRootDeals(parent *PokerNode) []*PokerNode {
 func buildP0Deals(parent *PokerNode) []*PokerNode {
 	var results []*PokerNode
 
-	for _, hand := range handsOOP {
-		// Card not on the board
-		if !utils.Contains(constants.Board, hand.Cards[0]) && !utils.Contains(constants.Board, hand.Cards[1]) {
+	hand := parent.p0Card
 
-			child := *parent
-			child.parent = parent
-			child.player = chance
-			child.p0Card = hand
-			child.History += h_P0Deal
+	child := *parent
+	child.parent = parent
+	child.player = chance
+	child.p0Card = hand
+	child.History += h_P0Deal
 
-			results = append(results, &child)
-		}
-	}
+	results = append(results, &child)
 
 	return results
 }
@@ -644,21 +623,15 @@ func buildP0Deals(parent *PokerNode) []*PokerNode {
 func buildP1Deals(parent *PokerNode) []*PokerNode {
 	var results []*PokerNode
 
-	for _, hand := range handsIP {
-		// Card not on the board
+	hand := parent.p1Card
 
-		// FIX ME: remove properly duplicates between two players
-		if !utils.Contains(constants.Board, hand.Cards[0]) && !utils.Contains(constants.Board, hand.Cards[1]) && !utils.Contains(constants.Board, parent.p0Card.Cards[0]) && !utils.Contains(constants.Board, parent.p0Card.Cards[1]) {
+	child := *parent
+	child.parent = parent
+	child.player = player0
+	child.p1Card = hand
+	child.History += h_p1Deal
 
-			child := *parent
-			child.parent = parent
-			child.player = player0
-			child.p1Card = hand
-			child.History += h_p1Deal
-
-			results = append(results, &child)
-		}
-	}
+	results = append(results, &child)
 
 	return results
 }
@@ -1080,7 +1053,7 @@ func buildChanceNode(parent *PokerNode) []*PokerNode {
 
 		child := *parent
 		child.player = player
-		child.History = parent.History + h_Chance
+		child.History = parent.History + "*" + newCard + "*" + h_Chance
 		child.Board = append(parent.Board, newCard)
 		child.Stage = newNodeStage
 

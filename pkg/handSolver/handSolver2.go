@@ -108,7 +108,7 @@ func HandSolver2(arr []string, safe bool) int {
 			colorsCount[0] += 1
 			stateHearts |= 1 << cardsValueMap[card]
 			if card == "A" {
-				stateHearts |= 1 << 1
+				stateHearts |= 1 << 1 // FIX ME: maybe put index here ???
 			}
 
 		case "d":

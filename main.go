@@ -22,19 +22,21 @@ func main() {
 	// fmt.Println(frequencies)
 
 	start := time.Now()
+
 	go poker.RunDeckChannel()
 
 	poker := poker.NewGame()
 	vanillaCFR := cfr.New()
-	nIter := 100000
+	nIter := 5
 	expectedValue := float32(0.0)
+
 	for i := 1; i <= nIter; i++ {
-		if i%10000 == 0 {
+		if i%1 == 0 {
 			fmt.Printf("Starting iteration : %d\n", i)
-			expectedValue += vanillaCFR.Run(poker)
-			for _, node := range vanillaCFR.Strategy {
-				node.UpdateStrategy()
-			}
+		}
+		expectedValue += vanillaCFR.Run(poker)
+		for _, node := range vanillaCFR.Strategy {
+			node.UpdateStrategy()
 		}
 	}
 
@@ -44,27 +46,4 @@ func main() {
 	elapsed := time.Since(start)
 
 	fmt.Printf("Did %d iterations in %s\n", nIter, elapsed)
-	/*
-		seen := make(map[string]struct{})
-		tree.Visit(poker, func(node cfr.GameTreeNode) {
-			if node.Type() != cfr.PlayerNodeType {
-				return
-			}
-
-			key := node.InfoSet(node.Player()).Key()
-			if _, ok := seen[string(key)]; ok {
-				return
-			}
-
-			actionProbs := policy.GetPolicy(node).GetAverageStrategy()
-			if actionProbs != nil {
-				fmt.Printf("[player %d] %6s: \n", node.Player(), key)
-				for _, a := range actionProbs {
-					fmt.Printf("%f\n", a)
-				}
-			}
-
-			seen[string(key)] = struct{}{}
-		})
-	*/
 }

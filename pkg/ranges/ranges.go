@@ -1,5 +1,12 @@
 package ranges
 
+import (
+	"math/rand"
+	"pokersolver/pkg/constants"
+	"pokersolver/pkg/utils"
+	"time"
+)
+
 type Hand struct {
 	Cards     []string
 	Frequency float64
@@ -192,4 +199,47 @@ func RangeToVector(matrix [][]float64) []Hand {
 	}
 
 	return vectorToReturn
+}
+
+// Get ranges
+var matrixOOP = constants.MatrixOOP
+var matrixIP = constants.MatrixIp
+
+// var handsOOP = ranges.RangeToVector(matrixOOP)
+// var handsIP = ranges.RangeToVector(matrixIP)
+
+func GetHands(board []string) (Hand, Hand) {
+	handsOOP := RangeToVector(matrixOOP)
+	handsIP := RangeToVector(matrixIP)
+
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(handsOOP), func(i, j int) {
+		handsOOP[i], handsOOP[j] = handsOOP[j], handsOOP[i]
+	})
+
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(handsIP), func(i, j int) {
+		handsIP[i], handsIP[j] = handsIP[j], handsIP[i]
+	})
+
+	var validHandOOP Hand
+	var validHandIP Hand
+	var currentForbiddenCards []string
+
+	for _, hand := range handsOOP {
+		if !utils.Contains(board, hand.Cards[0]) && !utils.Contains(board, hand.Cards[1]) {
+			validHandOOP = hand
+			currentForbiddenCards = append(board, validHandOOP.Cards...)
+			continue
+		}
+	}
+
+	for _, hand := range handsIP {
+		if !utils.Contains(currentForbiddenCards, hand.Cards[0]) && !utils.Contains(currentForbiddenCards, hand.Cards[1]) {
+			validHandIP = hand
+			continue
+		}
+	}
+
+	return validHandIP, validHandOOP
 }

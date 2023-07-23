@@ -78,6 +78,7 @@ func (n *NodeStrategy) GetStrategy() []float32 {
 }
 
 func (n *NodeStrategy) UpdateStrategy() {
+
 	for index := range n.StrategySum {
 		n.StrategySum[index] += n.ReachPr * n.Strategy[index]
 	}
@@ -90,6 +91,7 @@ func (n *NodeStrategy) UpdateStrategy() {
 }
 
 func (n *NodeStrategy) GetAverageStrategy() []float32 {
+
 	strategy := n.StrategySum
 	var totalFloat float32 = 0.0
 	for i := range strategy {
@@ -179,6 +181,7 @@ func (c *CFR) handlePlayerNode(node *poker.PokerNode, reachP0, reachP1, reachCha
 	regrets := make([]float32, nChildren)
 	for i := range regrets {
 		// Only positive regrets baby
+
 		candidateRegret := actionUtils[i] - util
 		if candidateRegret > 0 {
 			regrets[i] = candidateRegret
