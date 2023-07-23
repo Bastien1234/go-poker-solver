@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
 	"pokersolver/pkg/cfr"
 	"pokersolver/pkg/constants"
 	"pokersolver/pkg/poker"
@@ -27,11 +28,26 @@ func main() {
 
 	go poker.RunDeckChannel()
 
-	handsOOP := ranges.RangeToVector(constants.MatrixOOP)[0:constants.HandsToKeepFromRange]
-	handsIP := ranges.RangeToVector(constants.MatrixIp)[0:constants.HandsToKeepFromRange]
+	lro := poker.GetLimitedRunOuts(15)
+
+	handsOOP := ranges.RangeToVector(constants.MatrixOOP)
+	handsIP := ranges.RangeToVector(constants.MatrixIp)
+
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(handsOOP), func(i, j int) {
+		handsOOP[i], handsOOP[j] = handsOOP[j], handsOOP[i]
+	})
+	rand.Shuffle(len(handsIP), func(i, j int) {
+		handsIP[i], handsIP[j] = handsIP[j], handsIP[i]
+	})
+
+	handsOOP = handsOOP[0:constants.HandsToKeepFromRange]
+	handsIP = handsIP[0:constants.HandsToKeepFromRange]
+
+	fmt.Println(handsOOP)
 
 	vanillaCFR := cfr.New()
-	nIter := 25
+	nIter := 500
 	expectedValue := float32(0.0)
 
 	for i := 1; i <= nIter; i++ {
@@ -39,7 +55,7 @@ func main() {
 			fmt.Printf("Starting iteration : %d\n", i)
 			fmt.Printf("Size is : %d\n", len(vanillaCFR.Strategy))
 		}
-		poker := poker.NewGame(handsOOP, handsIP)
+		poker := poker.NewGame(handsOOP, handsIP, lro)
 		expectedValue += vanillaCFR.Run(poker)
 		for _, node := range vanillaCFR.Strategy {
 			node.UpdateStrategy()
