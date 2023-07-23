@@ -2,12 +2,12 @@ package constants
 
 var MaxRaises int = 2
 var Iterations1 int = 100000
-var HandsToKeepFromRange int = 30
+var HandsToKeepFromRange int = 20
 var Pot int = 75
 var EffectiveStack int = 450
 var Threashold float64 = 0.6
 var AllInSamplesize = 50
-var MaxChanceNodes = 1200
+var MaxChanceNodes = 1500
 
 var Board []string = []string{"Ah", "7d", "5h"}
 var Hero []string = []string{"Kh", "kd"}

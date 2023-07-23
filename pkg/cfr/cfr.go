@@ -2,7 +2,9 @@ package cfr
 
 import (
 	"pokersolver/pkg/poker"
+	"pokersolver/pkg/ranges"
 	"pokersolver/pkg/utils"
+	"strconv"
 )
 
 /*
@@ -25,6 +27,8 @@ type NodeStrategy struct {
 	Strategy    []float32
 	ReachPr     float32
 	ReachPrSum  float32
+
+	Visited int
 }
 
 func NewNodeStrategy(nbActions int) *NodeStrategy {
@@ -34,6 +38,8 @@ func NewNodeStrategy(nbActions int) *NodeStrategy {
 		Strategy:    utils.FilledArrayFloat(nbActions, 1.0/float32(nbActions)),
 		ReachPr:     0.0,
 		ReachPrSum:  0.0,
+
+		Visited: 0,
 	}
 
 	return n
@@ -43,20 +49,22 @@ type CFR struct {
 	Strategy map[string]*NodeStrategy
 }
 
-func (cfr *CFR) GetNodeStrategy(history string, nbActions int) *NodeStrategy {
+func (cfr *CFR) GetNodeStrategy(history string, nbActions int, playerCard ranges.Hand, player int) *NodeStrategy {
 
-	val, ok := cfr.Strategy[history]
+	key := playerCard.Cards[0] + playerCard.Cards[1] + "-" + strconv.Itoa(player) + "-" + history
+	val, ok := cfr.Strategy[key]
 	if ok {
 		return val
 
 	} else {
-		cfr.Strategy[history] = NewNodeStrategy(nbActions)
-		return cfr.Strategy[history]
+		cfr.Strategy[key] = NewNodeStrategy(nbActions)
+		return cfr.Strategy[key]
 	}
 }
 
 func (n *NodeStrategy) GetStrategy() []float32 {
-	regrets := n.RegretSum
+	regrets := make([]float32, len(n.RegretSum))
+	copy(regrets, n.RegretSum)
 	var normalizingSum float32 = 0.0
 
 	for _, el := range regrets {
@@ -66,7 +74,8 @@ func (n *NodeStrategy) GetStrategy() []float32 {
 
 	if normalizingSum > 0.0 {
 		for index := range regrets {
-			regrets[index] = regrets[index] / normalizingSum
+			value := regrets[index] / normalizingSum
+			regrets[index] = value
 		}
 
 		return regrets
@@ -152,8 +161,15 @@ func (c *CFR) handlePlayerNode(node *poker.PokerNode, reachP0, reachP1, reachCha
 		return c.runHelper(child, player, reachP0, reachP1, reachChance)
 	}
 
-	// policy := c.strategyProfile.GetPolicy(node)
-	policy := c.GetNodeStrategy(node.History, nChildren)
+	var playerCard ranges.Hand
+	if player == 0 {
+		playerCard = node.P0Card
+	} else if player == 1 {
+		playerCard = node.P1Card
+	}
+
+	policy := c.GetNodeStrategy(node.History, nChildren, playerCard, player)
+	policy.Visited++
 	strategy := policy.GetStrategy()
 	actionUtils := utils.FilledArrayFloat(nChildren, 0.0)
 

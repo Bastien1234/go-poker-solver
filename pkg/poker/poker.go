@@ -4,6 +4,7 @@ import (
 	"encoding"
 	"fmt"
 	"io"
+	"math/rand"
 	"pokersolver/pkg/constants"
 	"pokersolver/pkg/deck"
 	"pokersolver/pkg/handSolver"
@@ -11,6 +12,7 @@ import (
 	"pokersolver/pkg/utils"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/timpalpant/go-cfr"
 )
@@ -159,7 +161,7 @@ type PokerNode struct {
 	History       string
 
 	// Hands held by either players
-	p0Card, p1Card ranges.Hand
+	P0Card, P1Card ranges.Hand
 
 	// Perso
 	RaiseLevel       int
@@ -179,9 +181,35 @@ type PokerNode struct {
 	ReachPrSum  float32
 }
 
-func NewGame() *PokerNode {
-	handsOOP, handsIP := ranges.GetHands(constants.Board)
+func NewGame(handsOOP, handsIP []ranges.Hand) *PokerNode {
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(handsOOP), func(i, j int) {
+		handsOOP[i], handsOOP[j] = handsOOP[j], handsOOP[i]
+	})
 
+	rand.Seed(time.Now().UnixNano())
+	rand.Shuffle(len(handsIP), func(i, j int) {
+		handsIP[i], handsIP[j] = handsIP[j], handsIP[i]
+	})
+
+	var validHandOOP ranges.Hand
+	var validHandIP ranges.Hand
+	var currentForbiddenCards []string
+
+	for _, hand := range handsOOP {
+		if !utils.Contains(constants.Board, hand.Cards[0]) && !utils.Contains(constants.Board, hand.Cards[1]) {
+			validHandOOP = hand
+			currentForbiddenCards = append(constants.Board, validHandOOP.Cards...)
+			continue
+		}
+	}
+
+	for _, hand := range handsIP {
+		if !utils.Contains(currentForbiddenCards, hand.Cards[0]) && !utils.Contains(currentForbiddenCards, hand.Cards[1]) {
+			validHandIP = hand
+			continue
+		}
+	}
 	return &PokerNode{
 		player:     chance,
 		PotSize:    constants.Pot,
@@ -189,8 +217,8 @@ func NewGame() *PokerNode {
 		RaiseLevel: 0,
 		Stage:      Flop,
 		History:    h_RootNode,
-		p0Card:     handsOOP,
-		p1Card:     handsIP,
+		P0Card:     validHandOOP,
+		P1Card:     validHandIP,
 	}
 }
 
@@ -400,10 +428,10 @@ func getFullBoard(currentBoard, player, opponent []string) []string {
 
 func (n *PokerNode) playerCard(player int) ranges.Hand {
 	if player == player0 {
-		return n.p0Card
+		return n.P0Card
 	}
 
-	return n.p1Card
+	return n.P1Card
 }
 
 func uniformDist(n int) []float64 {
@@ -575,13 +603,15 @@ func (n *PokerNode) buildChildren() {
 func buildRootDeals(parent *PokerNode) []*PokerNode {
 	var results []*PokerNode
 
-	hand := parent.p0Card
+	// hand := parent.P0Card
 
 	child := &PokerNode{
 		parent:  parent,
 		player:  chance,
-		History: parent.p0Card.Cards[0] + parent.p0Card.Cards[1] + "-" + parent.p0Card.Cards[0] + parent.p0Card.Cards[1] + "-" + h_P0Deal,
-		p0Card:  hand,
+		History: h_P0Deal,
+		// P0Card:  hand,
+		P0Card: parent.P0Card,
+		P1Card: parent.P1Card,
 
 		PotSize:       constants.Pot,
 		EffectiveSize: constants.EffectiveStack,
@@ -595,7 +625,7 @@ func buildRootDeals(parent *PokerNode) []*PokerNode {
 		child := *parent
 		child.parent = parent
 		child.player = chance
-		child.p0Card = hand
+		child.P0Card = hand
 		child.history += h_P0Deal
 
 		results = append(results, &child)
@@ -607,12 +637,12 @@ func buildRootDeals(parent *PokerNode) []*PokerNode {
 func buildP0Deals(parent *PokerNode) []*PokerNode {
 	var results []*PokerNode
 
-	hand := parent.p0Card
+	// hand := parent.P0Card
 
 	child := *parent
 	child.parent = parent
 	child.player = chance
-	child.p0Card = hand
+	// child.P0Card = hand
 	child.History += h_P0Deal
 
 	results = append(results, &child)
@@ -623,12 +653,12 @@ func buildP0Deals(parent *PokerNode) []*PokerNode {
 func buildP1Deals(parent *PokerNode) []*PokerNode {
 	var results []*PokerNode
 
-	hand := parent.p1Card
+	// hand := parent.P1Card
 
 	child := *parent
 	child.parent = parent
 	child.player = player0
-	child.p1Card = hand
+	// child.P1Card = hand
 	child.History += h_p1Deal
 
 	results = append(results, &child)
@@ -1040,7 +1070,7 @@ func buildChanceNode(parent *PokerNode) []*PokerNode {
 				parent:  parent,
 				player:  player,
 				history: parent.history + h_Chance,
-				p0Card:  hand,
+				P0Card:  hand,
 
 				PotSize:       parent.PotSize,
 				EffectiveSize: parent.EffectiveSize,
