@@ -84,6 +84,31 @@ func RunDeckChannel() {
 	}
 }
 
+func GetLimitedRunOuts(nbRunouts int) [][]string {
+	runouts := [][]string{}
+	for {
+
+		runout := []string{}
+
+		deck := <-deckChannel
+
+		for i := range deck {
+			if !utils.Contains(constants.Board, deck[i]) {
+				runout = append(runout, deck[i])
+				if len(runout) == 2 {
+					runouts = append(runouts, runout)
+					continue
+				}
+			}
+		}
+
+		if len(runouts) == nbRunouts {
+			return runouts
+		}
+
+	}
+}
+
 // InfoSet is the observable game history from the point of view of one player.
 type InfoSet interface {
 	// Key is an identifier used to uniquely look up this InfoSet
@@ -179,9 +204,12 @@ type PokerNode struct {
 	Strategy    []float32
 	ReachPr     float32
 	ReachPrSum  float32
+
+	LimitedRunOuts [][]string
+	TurnIndex      int
 }
 
-func NewGame(handsOOP, handsIP []ranges.Hand) *PokerNode {
+func NewGame(handsOOP, handsIP []ranges.Hand, limitedRunOuts [][]string) *PokerNode {
 	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(handsOOP), func(i, j int) {
 		handsOOP[i], handsOOP[j] = handsOOP[j], handsOOP[i]
@@ -211,14 +239,15 @@ func NewGame(handsOOP, handsIP []ranges.Hand) *PokerNode {
 		}
 	}
 	return &PokerNode{
-		player:     chance,
-		PotSize:    constants.Pot,
-		Board:      constants.Board,
-		RaiseLevel: 0,
-		Stage:      Flop,
-		History:    h_RootNode,
-		P0Card:     validHandOOP,
-		P1Card:     validHandIP,
+		player:         chance,
+		PotSize:        constants.Pot,
+		Board:          constants.Board,
+		RaiseLevel:     0,
+		Stage:          Flop,
+		History:        h_RootNode,
+		P0Card:         validHandOOP,
+		P1Card:         validHandIP,
+		LimitedRunOuts: limitedRunOuts,
 	}
 }
 
@@ -613,10 +642,11 @@ func buildRootDeals(parent *PokerNode) []*PokerNode {
 		P0Card: parent.P0Card,
 		P1Card: parent.P1Card,
 
-		PotSize:       constants.Pot,
-		EffectiveSize: constants.EffectiveStack,
-		RaiseLevel:    0,
-		Board:         constants.Board,
+		PotSize:        constants.Pot,
+		EffectiveSize:  constants.EffectiveStack,
+		RaiseLevel:     0,
+		Board:          constants.Board,
+		LimitedRunOuts: parent.LimitedRunOuts,
 	}
 
 	results = append(results, child)
@@ -1030,7 +1060,7 @@ func buildChanceNode(parent *PokerNode) []*PokerNode {
 	var results []*PokerNode
 
 	// allPossibleCards := deck.MakeDeck()
-	allPossibleCards := <-deckChannel
+	// allPossibleCards := <-deckChannel
 	validCards := []string{}
 
 	// FIX ME: not sure
@@ -1042,17 +1072,40 @@ func buildChanceNode(parent *PokerNode) []*PokerNode {
 		player = player0
 	}
 
-	for _, c := range allPossibleCards {
-		if !utils.Contains(parent.Board, c) {
-			validCards = append(validCards, c)
+	/*
+		for _, c := range allPossibleCards {
+			if !utils.Contains(parent.Board, c) {
+				validCards = append(validCards, c)
+			}
 		}
+
+		if len(validCards) > constants.MaxChanceNodes {
+			validCards = validCards[0:constants.MaxChanceNodes]
+		}
+	*/
+
+	// ---------------
+	hasTurnIndex := false
+	var turnIndexes = []int{}
+
+	if parent.Stage == Flop {
+		for index, cards := range parent.LimitedRunOuts {
+			card := cards[0]
+
+			if !utils.Contains(parent.Board, card) {
+				validCards = append(validCards, card)
+				turnIndexes = append(turnIndexes, index)
+				hasTurnIndex = true
+			}
+		}
+	} else if parent.Stage == Turn {
+		card := parent.LimitedRunOuts[parent.TurnIndex][1]
+		validCards = append(validCards, card)
 	}
 
-	if len(validCards) > constants.MaxChanceNodes {
-		validCards = validCards[0:constants.MaxChanceNodes]
-	}
+	// ------------
 
-	for _, newCard := range validCards {
+	for index, newCard := range validCards {
 		// Card not on the board
 
 		var newNodeStage NodeStage
@@ -1080,12 +1133,17 @@ func buildChanceNode(parent *PokerNode) []*PokerNode {
 			}
 
 		*/
+		finalTurnIndex := -1
+		if hasTurnIndex {
+			finalTurnIndex = turnIndexes[index]
+		}
 
 		child := *parent
 		child.player = player
 		child.History = parent.History + "*" + newCard + "*" + h_Chance
 		child.Board = append(parent.Board, newCard)
 		child.Stage = newNodeStage
+		child.TurnIndex = finalTurnIndex
 
 		results = append(results, &child)
 	}
