@@ -4,7 +4,8 @@ import (
 	"pokersolver/pkg/poker"
 	"pokersolver/pkg/ranges"
 	"pokersolver/pkg/utils"
-	"strconv"
+	"sort"
+	"sync"
 )
 
 /*
@@ -29,6 +30,7 @@ type NodeStrategy struct {
 	ReachPrSum  float32
 
 	Visited int
+	mtx     sync.Mutex
 }
 
 func NewNodeStrategy(nbActions int) *NodeStrategy {
@@ -40,26 +42,96 @@ func NewNodeStrategy(nbActions int) *NodeStrategy {
 		ReachPrSum:  0.0,
 
 		Visited: 0,
+		mtx:     sync.Mutex{},
 	}
 
 	return n
 }
 
 type CFR struct {
-	Strategy map[string]*NodeStrategy
+	Strategy0Flop map[string]*NodeStrategy
+	Strategy1Flop map[string]*NodeStrategy
+
+	Strategy0Turn map[string]*NodeStrategy
+	Strategy1Turn map[string]*NodeStrategy
+
+	Strategy0River map[string]*NodeStrategy
+	Strategy1River map[string]*NodeStrategy
 }
 
-func (cfr *CFR) GetNodeStrategy(history string, nbActions int, playerCard ranges.Hand, player int) *NodeStrategy {
+func (cfr *CFR) GetNodeStrategy(history string, nbActions int, playerCard ranges.Hand, player int, node poker.PokerNode) *NodeStrategy {
 
-	key := playerCard.Cards[0] + playerCard.Cards[1] + "-" + strconv.Itoa(player) + "-" + history
-	val, ok := cfr.Strategy[key]
-	if ok {
-		return val
+	str := playerCard.Cards
+	sort.Strings(str)
 
+	key := str[0] + str[1] + "-" + history
+
+	if player == 0 {
+
+		switch node.Stage {
+		case poker.Flop:
+			val, ok := cfr.Strategy0Flop[key]
+			if ok {
+				return val
+
+			} else {
+				cfr.Strategy0Flop[key] = NewNodeStrategy(nbActions)
+				return cfr.Strategy0Flop[key]
+			}
+		case poker.Turn:
+			val, ok := cfr.Strategy0Turn[key]
+			if ok {
+				return val
+
+			} else {
+				cfr.Strategy0Turn[key] = NewNodeStrategy(nbActions)
+				return cfr.Strategy0Turn[key]
+			}
+		case poker.River:
+			val, ok := cfr.Strategy0River[key]
+			if ok {
+				return val
+
+			} else {
+				cfr.Strategy0River[key] = NewNodeStrategy(nbActions)
+				return cfr.Strategy0River[key]
+			}
+		}
 	} else {
-		cfr.Strategy[key] = NewNodeStrategy(nbActions)
-		return cfr.Strategy[key]
+
+		switch node.Stage {
+		case poker.Flop:
+			val, ok := cfr.Strategy1Flop[key]
+			if ok {
+				return val
+
+			} else {
+				cfr.Strategy1Flop[key] = NewNodeStrategy(nbActions)
+				return cfr.Strategy1Flop[key]
+			}
+		case poker.Turn:
+			val, ok := cfr.Strategy1Turn[key]
+			if ok {
+				return val
+
+			} else {
+				cfr.Strategy1Turn[key] = NewNodeStrategy(nbActions)
+				return cfr.Strategy1Turn[key]
+			}
+		case poker.River:
+			val, ok := cfr.Strategy1River[key]
+			if ok {
+				return val
+
+			} else {
+				cfr.Strategy1River[key] = NewNodeStrategy(nbActions)
+				return cfr.Strategy1River[key]
+			}
+		}
 	}
+
+	panic("NOOOOOOOOOO")
+	return nil
 }
 
 func (n *NodeStrategy) GetStrategy() []float32 {
@@ -117,15 +189,21 @@ func (n *NodeStrategy) GetAverageStrategy() []float32 {
 
 func New() *CFR {
 	return &CFR{
-		Strategy: map[string]*NodeStrategy{},
+		// Strategy: map[string]*NodeStrategy{},
+		Strategy0Flop:  make(map[string]*NodeStrategy, 220),
+		Strategy1Flop:  make(map[string]*NodeStrategy, 220),
+		Strategy0Turn:  make(map[string]*NodeStrategy, 30000),
+		Strategy1Turn:  make(map[string]*NodeStrategy, 30000),
+		Strategy0River: make(map[string]*NodeStrategy, 350000),
+		Strategy1River: make(map[string]*NodeStrategy, 350000),
 	}
 }
 
-func (c *CFR) Run(node *poker.PokerNode) float32 {
+func (c *CFR) Run(node poker.PokerNode) float32 {
 	return c.runHelper(node, node.Player(), 1.0, 1.0, 1.0)
 }
 
-func (c *CFR) runHelper(node *poker.PokerNode, lastPlayer int, reachP0, reachP1, reachChance float32) float32 {
+func (c *CFR) runHelper(node poker.PokerNode, lastPlayer int, reachP0, reachP1, reachChance float32) float32 {
 	var ev float32
 	switch node.Type() {
 	case poker.TerminalNodeType:
@@ -141,7 +219,7 @@ func (c *CFR) runHelper(node *poker.PokerNode, lastPlayer int, reachP0, reachP1,
 	return ev
 }
 
-func (c *CFR) handleChanceNode(node *poker.PokerNode, lastPlayer int, reachP0, reachP1, reachChance float32) float32 {
+func (c *CFR) handleChanceNode(node poker.PokerNode, lastPlayer int, reachP0, reachP1, reachChance float32) float32 {
 	var expectedValue float32
 	for i := 0; i < node.NumChildren(); i++ {
 		child := node.GetChild(i)
@@ -152,7 +230,7 @@ func (c *CFR) handleChanceNode(node *poker.PokerNode, lastPlayer int, reachP0, r
 	return expectedValue
 }
 
-func (c *CFR) handlePlayerNode(node *poker.PokerNode, reachP0, reachP1, reachChance float32) float32 {
+func (c *CFR) handlePlayerNode(node poker.PokerNode, reachP0, reachP1, reachChance float32) float32 {
 	player := node.Player()
 	nChildren := node.NumChildren()
 	if nChildren == 1 {
@@ -168,7 +246,7 @@ func (c *CFR) handlePlayerNode(node *poker.PokerNode, reachP0, reachP1, reachCha
 		playerCard = node.P1Card
 	}
 
-	policy := c.GetNodeStrategy(node.History, nChildren, playerCard, player)
+	policy := c.GetNodeStrategy(node.History, nChildren, playerCard, player, node)
 	policy.Visited++
 	strategy := policy.GetStrategy()
 	actionUtils := utils.FilledArrayFloat(nChildren, 0.0)

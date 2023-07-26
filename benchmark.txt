@@ -1,0 +1,59 @@
+inputs:
+
+100 iterations
+
+lro := poker.GetLimitedRunOuts(100)
+
+
+var MaxRaises int = 2
+var Iterations1 int = 100000
+var HandsToKeepFromRange int = 30
+var Pot int = 75
+var EffectiveStack int = 450
+var Threashold float64 = 0.6
+var AllInSamplesize = 50
+var MaxChanceNodes = 1500
+
+var Board []string = []string{"Ah", "7d", "5h"}
+var Hero []string = []string{"Kh", "kd"}
+var HeroPosition string = "ip"
+
+// Strategies
+var OOPFlopBets = []float64{0.25, 0.75}
+var IPFlopBets = []float64{0.25, 0.75, 1.2}
+var OOPFlopRaises = []float64{3}
+var IPFlopRaises = []float64{3}
+
+var OOPTurnBets = []float64{0.75, 1.2}
+var IPTurnBets = []float64{0.75, 1.2}
+var OOPTurnRaises = []float64{3}
+var IPTurnRaises = []float64{3}
+
+var OOPRiverBets = []float64{0.75, 1.2}
+var IPRiverBets = []float64{0.75, 1.2}
+var OOPRiverRaises = []float64{3}
+var IPRiverRaises = []float64{3}
+
+
+// Native version
+2m49.870010417s
+Improvement : 0
+
+
+// Preallocate hashmaps   ---> Calculate hashsize beforehand
+2m49.871864042s
+Improvement : ...0 :D
+
+// split hashmaps in two 
+2m49.028093416s
+
+// Pass tree by value 
+No improvement...
+
+// Sort string (key of hashmap) then reduce size by 40%
+Nope.
+
+// A lot of hashmaps 
+Stil not...
+
+// Multithreadding

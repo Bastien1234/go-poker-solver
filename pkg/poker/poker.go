@@ -181,7 +181,7 @@ type GameTreeNode interface {
 type PokerNode struct {
 	parent        *PokerNode
 	player        int
-	children      []*PokerNode
+	children      []PokerNode
 	probabilities []float64
 	History       string
 
@@ -269,7 +269,7 @@ func (n *PokerNode) NumChildren() int {
 	return len(n.children)
 }
 
-func (n *PokerNode) GetChild(i int) *PokerNode {
+func (n *PokerNode) GetChild(i int) PokerNode {
 	if n.children == nil {
 		n.buildChildren()
 	}
@@ -629,12 +629,12 @@ func (n *PokerNode) buildChildren() {
 	// case allin
 }
 
-func buildRootDeals(parent *PokerNode) []*PokerNode {
-	var results []*PokerNode
+func buildRootDeals(parent *PokerNode) []PokerNode {
+	var results []PokerNode
 
 	// hand := parent.P0Card
 
-	child := &PokerNode{
+	child := PokerNode{
 		parent:  parent,
 		player:  chance,
 		History: h_P0Deal,
@@ -664,8 +664,8 @@ func buildRootDeals(parent *PokerNode) []*PokerNode {
 	return results
 }
 
-func buildP0Deals(parent *PokerNode) []*PokerNode {
-	var results []*PokerNode
+func buildP0Deals(parent *PokerNode) []PokerNode {
+	var results []PokerNode
 
 	// hand := parent.P0Card
 
@@ -675,13 +675,13 @@ func buildP0Deals(parent *PokerNode) []*PokerNode {
 	// child.P0Card = hand
 	child.History += h_P0Deal
 
-	results = append(results, &child)
+	results = append(results, child)
 
 	return results
 }
 
-func buildP1Deals(parent *PokerNode) []*PokerNode {
-	var results []*PokerNode
+func buildP1Deals(parent *PokerNode) []PokerNode {
+	var results []PokerNode
 
 	// hand := parent.P1Card
 
@@ -691,13 +691,13 @@ func buildP1Deals(parent *PokerNode) []*PokerNode {
 	// child.P1Card = hand
 	child.History += h_p1Deal
 
-	results = append(results, &child)
+	results = append(results, child)
 
 	return results
 }
 
-func buildOpenAction(parent *PokerNode) []*PokerNode {
-	var result []*PokerNode
+func buildOpenAction(parent *PokerNode) []PokerNode {
+	var result []PokerNode
 
 	// First to act, action is check and different betsizes
 	choices := []string{h_Check}
@@ -766,7 +766,7 @@ func buildOpenAction(parent *PokerNode) []*PokerNode {
 
 		child.PotSize += int(addToPotSize)
 
-		result = append(result, &child)
+		result = append(result, child)
 
 	}
 
@@ -774,8 +774,8 @@ func buildOpenAction(parent *PokerNode) []*PokerNode {
 }
 
 // FIX ME: Bet size with threashold etc
-func buildCBAction(parent *PokerNode) []*PokerNode {
-	var result []*PokerNode
+func buildCBAction(parent *PokerNode) []PokerNode {
+	var result []PokerNode
 
 	// This is only after open check
 	choices := []string{h_CheckBack}
@@ -844,7 +844,7 @@ func buildCBAction(parent *PokerNode) []*PokerNode {
 
 		child.PotSize += int(addToPotSize)
 
-		result = append(result, &child)
+		result = append(result, child)
 
 	}
 
@@ -860,8 +860,8 @@ func isOverThreasholdRaise(parent *PokerNode, choice float64) bool {
 	return potentialRaise+float64(parent.EffectiveSize) >= float64(parent.EffectiveSize)*constants.Threashold
 }
 
-func buildFCRAction(parent *PokerNode, includeRaise bool) []*PokerNode {
-	var result []*PokerNode
+func buildFCRAction(parent *PokerNode, includeRaise bool) []PokerNode {
+	var result []PokerNode
 
 	// FC or FCR node
 	choices := []string{h_Fold, h_Call}
@@ -1049,15 +1049,15 @@ func buildFCRAction(parent *PokerNode, includeRaise bool) []*PokerNode {
 
 		child.PotSize += int(addToPotSize)
 
-		result = append(result, &child)
+		result = append(result, child)
 
 	}
 
 	return result
 }
 
-func buildChanceNode(parent *PokerNode) []*PokerNode {
-	var results []*PokerNode
+func buildChanceNode(parent *PokerNode) []PokerNode {
+	var results []PokerNode
 
 	// allPossibleCards := deck.MakeDeck()
 	// allPossibleCards := <-deckChannel
@@ -1145,7 +1145,7 @@ func buildChanceNode(parent *PokerNode) []*PokerNode {
 		child.Stage = newNodeStage
 		child.TurnIndex = finalTurnIndex
 
-		results = append(results, &child)
+		results = append(results, child)
 	}
 
 	return results

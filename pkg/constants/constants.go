@@ -2,7 +2,7 @@ package constants
 
 var MaxRaises int = 2
 var Iterations1 int = 100000
-var HandsToKeepFromRange int = 20
+var HandsToKeepFromRange int = 30
 var Pot int = 75
 var EffectiveStack int = 450
 var Threashold float64 = 0.6
