@@ -44,44 +44,20 @@ func main() {
 	handsOOP = handsOOP[0:constants.HandsToKeepFromRange]
 	handsIP = handsIP[0:constants.HandsToKeepFromRange]
 
-	fmt.Println(handsOOP)
-
 	vanillaCFR := cfr.New()
+	strategyMap := cfr.NewStrategyMap()
 	nIter := 100
 	expectedValue := float32(0.0)
 
 	for i := 0; i <= nIter; i++ {
 		if i%10 == 0 {
 			fmt.Printf("Starting iteration : %d\n", i)
-			fmt.Printf("Size is : %d\n", len(vanillaCFR.Strategy0Flop))
-			fmt.Printf("Size is : %d\n", len(vanillaCFR.Strategy0Turn))
-			fmt.Printf("Size is : %d\n", len(vanillaCFR.Strategy0River))
 			fmt.Println(time.Now())
 		}
 		poker := poker.NewGame(handsOOP, handsIP, lro)
-		expectedValue += vanillaCFR.Run(*poker)
+		vanillaCFR.Run(*poker, strategyMap)
 
-		for _, node := range vanillaCFR.Strategy0Flop {
-			node.UpdateStrategy()
-		}
-		for _, node := range vanillaCFR.Strategy1Flop {
-			node.UpdateStrategy()
-		}
-
-		for _, node := range vanillaCFR.Strategy0Turn {
-			node.UpdateStrategy()
-		}
-		for _, node := range vanillaCFR.Strategy1Turn {
-			node.UpdateStrategy()
-		}
-
-		for _, node := range vanillaCFR.Strategy0River {
-			node.UpdateStrategy()
-		}
-		for _, node := range vanillaCFR.Strategy1River {
-			node.UpdateStrategy()
-		}
-
+		strategyMap.UpdateStrategy()
 	}
 
 	expectedValue /= float32(nIter)

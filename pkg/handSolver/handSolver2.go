@@ -108,7 +108,7 @@ func HandSolver2(arr []string, safe bool) int {
 			colorsCount[0] += 1
 			stateHearts |= 1 << cardsValueMap[card]
 			if card == "A" {
-				stateHearts |= 1 << 1 // FIX ME: maybe put index here ???
+				stateHearts |= 1 << 1
 			}
 
 		case "d":
@@ -453,7 +453,6 @@ func HandSolver2(arr []string, safe bool) int {
 		}
 	}
 
-	// FIX ME
 	var multiplier int = 1e9
 	returnValue := 100_000_000_000 + (bestPair * 1e9)
 	for i := 0; i < 5; i++ {

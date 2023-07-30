@@ -56,4 +56,6 @@ Nope.
 // A lot of hashmaps 
 Stil not...
 
+// Randomly pick chance node: 
+
 // Multithreadding

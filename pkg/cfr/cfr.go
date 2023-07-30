@@ -1,10 +1,12 @@
 package cfr
 
 import (
+	"math/rand"
 	"pokersolver/pkg/poker"
 	"pokersolver/pkg/ranges"
 	"pokersolver/pkg/utils"
 	"sort"
+	"strconv"
 	"sync"
 )
 
@@ -30,7 +32,6 @@ type NodeStrategy struct {
 	ReachPrSum  float32
 
 	Visited int
-	mtx     sync.Mutex
 }
 
 func NewNodeStrategy(nbActions int) *NodeStrategy {
@@ -42,99 +43,130 @@ func NewNodeStrategy(nbActions int) *NodeStrategy {
 		ReachPrSum:  0.0,
 
 		Visited: 0,
-		mtx:     sync.Mutex{},
 	}
 
 	return n
 }
 
 type CFR struct {
-	Strategy0Flop map[string]*NodeStrategy
-	Strategy1Flop map[string]*NodeStrategy
-
-	Strategy0Turn map[string]*NodeStrategy
-	Strategy1Turn map[string]*NodeStrategy
-
-	Strategy0River map[string]*NodeStrategy
-	Strategy1River map[string]*NodeStrategy
 }
 
-func (cfr *CFR) GetNodeStrategy(history string, nbActions int, playerCard ranges.Hand, player int, node poker.PokerNode) *NodeStrategy {
+type StrategyMap struct {
+	SM map[string]*NodeStrategy
+
+	mtx sync.Mutex
+}
+
+func (sm *StrategyMap) GetNodeStrategyKey(history string, nbActions int, playerCard ranges.Hand, player int, node poker.PokerNode) string {
+	sm.mtx.Lock()
+	defer sm.mtx.Unlock()
 
 	str := playerCard.Cards
 	sort.Strings(str)
 
-	key := str[0] + str[1] + "-" + history
+	key := str[0] + str[1] + "-" + strconv.Itoa(player) + history
 
-	if player == 0 {
+	_, ok := sm.SM[key]
+	if ok {
+		return key
 
-		switch node.Stage {
-		case poker.Flop:
-			val, ok := cfr.Strategy0Flop[key]
-			if ok {
-				return val
-
-			} else {
-				cfr.Strategy0Flop[key] = NewNodeStrategy(nbActions)
-				return cfr.Strategy0Flop[key]
-			}
-		case poker.Turn:
-			val, ok := cfr.Strategy0Turn[key]
-			if ok {
-				return val
-
-			} else {
-				cfr.Strategy0Turn[key] = NewNodeStrategy(nbActions)
-				return cfr.Strategy0Turn[key]
-			}
-		case poker.River:
-			val, ok := cfr.Strategy0River[key]
-			if ok {
-				return val
-
-			} else {
-				cfr.Strategy0River[key] = NewNodeStrategy(nbActions)
-				return cfr.Strategy0River[key]
-			}
-		}
 	} else {
-
-		switch node.Stage {
-		case poker.Flop:
-			val, ok := cfr.Strategy1Flop[key]
-			if ok {
-				return val
-
-			} else {
-				cfr.Strategy1Flop[key] = NewNodeStrategy(nbActions)
-				return cfr.Strategy1Flop[key]
-			}
-		case poker.Turn:
-			val, ok := cfr.Strategy1Turn[key]
-			if ok {
-				return val
-
-			} else {
-				cfr.Strategy1Turn[key] = NewNodeStrategy(nbActions)
-				return cfr.Strategy1Turn[key]
-			}
-		case poker.River:
-			val, ok := cfr.Strategy1River[key]
-			if ok {
-				return val
-
-			} else {
-				cfr.Strategy1River[key] = NewNodeStrategy(nbActions)
-				return cfr.Strategy1River[key]
-			}
-		}
+		sm.SM[key] = NewNodeStrategy(nbActions)
+		return key
 	}
-
-	panic("NOOOOOOOOOO")
-	return nil
 }
 
-func (n *NodeStrategy) GetStrategy() []float32 {
+func (sm *StrategyMap) _GetNodeStrategy(history string, nbActions int, playerCard ranges.Hand, player int, node poker.PokerNode) *NodeStrategy {
+	sm.mtx.Lock()
+	defer sm.mtx.Unlock()
+
+	str := playerCard.Cards
+	sort.Strings(str)
+
+	key := str[0] + str[1] + "-" + strconv.Itoa(player) + history
+
+	val, ok := sm.SM[key]
+	if ok {
+		return val
+
+	} else {
+		sm.SM[key] = NewNodeStrategy(nbActions)
+		return sm.SM[key]
+	}
+
+	/*
+
+		if player == 0 {
+
+			switch node.Stage {
+			case poker.Flop:
+				val, ok := sm.SM[key]
+				if ok {
+					return val
+
+				} else {
+					sm.SM[key] = NewNodeStrategy(nbActions)
+					return sm.SM[key]
+				}
+			case poker.Turn:
+				val, ok := sm.Strategy0Turn[key]
+				if ok {
+					return val
+
+				} else {
+					sm.Strategy0Turn[key] = NewNodeStrategy(nbActions)
+					return sm.Strategy0Turn[key]
+				}
+			case poker.River:
+				val, ok := sm.Strategy0River[key]
+				if ok {
+					return val
+
+				} else {
+					sm.Strategy0River[key] = NewNodeStrategy(nbActions)
+					return sm.Strategy0River[key]
+				}
+			}
+		} else {
+
+			switch node.Stage {
+			case poker.Flop:
+				val, ok := sm.Strategy1Flop[key]
+				if ok {
+					return val
+
+				} else {
+					sm.Strategy1Flop[key] = NewNodeStrategy(nbActions)
+					return sm.Strategy1Flop[key]
+				}
+			case poker.Turn:
+				val, ok := sm.Strategy1Turn[key]
+				if ok {
+					return val
+
+				} else {
+					sm.Strategy1Turn[key] = NewNodeStrategy(nbActions)
+					return sm.Strategy1Turn[key]
+				}
+			case poker.River:
+				val, ok := sm.Strategy1River[key]
+				if ok {
+					return val
+
+				} else {
+					sm.Strategy1River[key] = NewNodeStrategy(nbActions)
+					return sm.Strategy1River[key]
+				}
+			}
+		}
+
+		panic("NOOOOOOOOOO")
+		return nil
+	*/
+}
+
+func (sm *StrategyMap) GetStrategy(key string) []float32 {
+	n := sm.SM[key]
 	regrets := make([]float32, len(n.RegretSum))
 	copy(regrets, n.RegretSum)
 	var normalizingSum float32 = 0.0
@@ -158,17 +190,41 @@ func (n *NodeStrategy) GetStrategy() []float32 {
 	return yeahDefaultList
 }
 
-func (n *NodeStrategy) UpdateStrategy() {
+func (sm *StrategyMap) UpdateStrategy() {
+	sm.mtx.Lock()
+	defer sm.mtx.Unlock()
+	for key := range sm.SM {
 
-	for index := range n.StrategySum {
-		n.StrategySum[index] += n.ReachPr * n.Strategy[index]
+		n := sm.SM[key]
+
+		for index := range n.StrategySum {
+			n.StrategySum[index] += n.ReachPr * n.Strategy[index]
+		}
+
+		n.ReachPrSum += n.ReachPr
+
+		n.Strategy = sm.GetStrategy(key)
+
+		n.ReachPr = 0.0
 	}
+}
 
-	n.ReachPrSum += n.ReachPr
+func (sm *StrategyMap) UpdatePolicy(key string, player int, reachP0, reachP1 float32, regrets []float32) {
+	sm.mtx.Lock()
+	defer sm.mtx.Unlock()
+	n := sm.SM[key]
 
-	n.Strategy = n.GetStrategy()
-
-	n.ReachPr = 0.0
+	if player == 0 {
+		n.ReachPr += reachP0
+		for i := range n.RegretSum {
+			n.RegretSum[i] += reachP1 * regrets[i]
+		}
+	} else {
+		n.ReachPr += reachP1
+		for i := range n.RegretSum {
+			n.RegretSum[i] += reachP0 * regrets[i]
+		}
+	}
 }
 
 func (n *NodeStrategy) GetAverageStrategy() []float32 {
@@ -188,55 +244,64 @@ func (n *NodeStrategy) GetAverageStrategy() []float32 {
 }
 
 func New() *CFR {
-	return &CFR{
+	return &CFR{}
+}
+
+func NewStrategyMap() *StrategyMap {
+	return &StrategyMap{
 		// Strategy: map[string]*NodeStrategy{},
-		Strategy0Flop:  make(map[string]*NodeStrategy, 220),
-		Strategy1Flop:  make(map[string]*NodeStrategy, 220),
-		Strategy0Turn:  make(map[string]*NodeStrategy, 30000),
-		Strategy1Turn:  make(map[string]*NodeStrategy, 30000),
-		Strategy0River: make(map[string]*NodeStrategy, 350000),
-		Strategy1River: make(map[string]*NodeStrategy, 350000),
+
+		SM: make(map[string]*NodeStrategy, 800000),
 	}
 }
 
-func (c *CFR) Run(node poker.PokerNode) float32 {
-	return c.runHelper(node, node.Player(), 1.0, 1.0, 1.0)
+func (c *CFR) Run(node poker.PokerNode, strategyMap *StrategyMap) float32 {
+	return c.runHelper(node, node.Player(), 1.0, 1.0, 1.0, strategyMap)
 }
 
-func (c *CFR) runHelper(node poker.PokerNode, lastPlayer int, reachP0, reachP1, reachChance float32) float32 {
+func (c *CFR) runHelper(node poker.PokerNode, lastPlayer int, reachP0, reachP1, reachChance float32, strategyMap *StrategyMap) float32 {
 	var ev float32
 	switch node.Type() {
 	case poker.TerminalNodeType:
 		ev = float32(node.Utility(lastPlayer))
 	case poker.ChanceNodeType:
-		ev = c.handleChanceNode(node, lastPlayer, reachP0, reachP1, reachChance)
+		ev = c.handleChanceNode(node, lastPlayer, reachP0, reachP1, reachChance, strategyMap)
 	default:
 		sgn := getSign(lastPlayer, node.Player())
-		ev = sgn * c.handlePlayerNode(node, reachP0, reachP1, reachChance)
+		ev = sgn * c.handlePlayerNode(node, reachP0, reachP1, reachChance, strategyMap)
 	}
 
 	node.Close()
 	return ev
 }
 
-func (c *CFR) handleChanceNode(node poker.PokerNode, lastPlayer int, reachP0, reachP1, reachChance float32) float32 {
-	var expectedValue float32
-	for i := 0; i < node.NumChildren(); i++ {
-		child := node.GetChild(i)
-		p := float32(node.GetChildProbability(i))
-		expectedValue += p * c.runHelper(child, lastPlayer, reachP0, reachP1, reachChance*p)
-	}
+func (c *CFR) handleChanceNode(node poker.PokerNode, lastPlayer int, reachP0, reachP1, reachChance float32, strategyMap *StrategyMap) float32 {
+	/*
+		var expectedValue float32
+			for i := 0; i < node.NumChildren(); i++ {
+				child := node.GetChild(i)
+				p := float32(node.GetChildProbability(i))
+				expectedValue += p * c.runHelper(child, lastPlayer, reachP0, reachP1, reachChance*p, strategyMap)
+			}
+	*/
+
+	// Try to randomize to see only one node
+	nbChildren := node.NumChildren()
+	childIndex := rand.Intn(nbChildren)
+	child := node.GetChild(childIndex)
+	// p := float32(node.GetChildProbability(i)) FIX ME OMG
+	expectedValue := 1 * c.runHelper(child, lastPlayer, reachP0, reachP1, reachChance*1, strategyMap) // FIX ME: value p instead of 1
 
 	return expectedValue
 }
 
-func (c *CFR) handlePlayerNode(node poker.PokerNode, reachP0, reachP1, reachChance float32) float32 {
+func (c *CFR) handlePlayerNode(node poker.PokerNode, reachP0, reachP1, reachChance float32, strategyMap *StrategyMap) float32 {
 	player := node.Player()
 	nChildren := node.NumChildren()
 	if nChildren == 1 {
 		// Optimization to skip trivial nodes with no real choice.
 		child := node.GetChild(0)
-		return c.runHelper(child, player, reachP0, reachP1, reachChance)
+		return c.runHelper(child, player, reachP0, reachP1, reachChance, strategyMap)
 	}
 
 	var playerCard ranges.Hand
@@ -246,9 +311,8 @@ func (c *CFR) handlePlayerNode(node poker.PokerNode, reachP0, reachP1, reachChan
 		playerCard = node.P1Card
 	}
 
-	policy := c.GetNodeStrategy(node.History, nChildren, playerCard, player, node)
-	policy.Visited++
-	strategy := policy.GetStrategy()
+	key := strategyMap.GetNodeStrategyKey(node.History, nChildren, playerCard, player, node)
+	strategy := strategyMap.GetStrategy(key)
 	actionUtils := utils.FilledArrayFloat(nChildren, 0.0)
 
 	for i := 0; i < nChildren; i++ {
@@ -256,9 +320,9 @@ func (c *CFR) handlePlayerNode(node poker.PokerNode, reachP0, reachP1, reachChan
 		p := strategy[i]
 		// var util float32
 		if player == 0 {
-			actionUtils[i] = c.runHelper(child, player, p*reachP0, reachP1, reachChance)
+			actionUtils[i] = c.runHelper(child, player, p*reachP0, reachP1, reachChance, strategyMap)
 		} else {
-			actionUtils[i] = c.runHelper(child, player, reachP0, p*reachP1, reachChance)
+			actionUtils[i] = c.runHelper(child, player, reachP0, p*reachP1, reachChance, strategyMap)
 		}
 
 		// regrets[i] = util
@@ -284,17 +348,7 @@ func (c *CFR) handlePlayerNode(node poker.PokerNode, reachP0, reachP1, reachChan
 		}
 	}
 
-	if player == 0 {
-		policy.ReachPr += reachP0
-		for i := range policy.RegretSum {
-			policy.RegretSum[i] += reachP1 * regrets[i]
-		}
-	} else {
-		policy.ReachPr += reachP1
-		for i := range policy.RegretSum {
-			policy.RegretSum[i] += reachP0 * regrets[i]
-		}
-	}
+	strategyMap.UpdatePolicy(key, player, reachP0, reachP1, regrets)
 
 	return util
 
