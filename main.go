@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"pokersolver/pkg/cfr"
 	"pokersolver/pkg/constants"
 	"pokersolver/pkg/poker"
 	"pokersolver/pkg/ranges"
@@ -44,8 +43,8 @@ func main() {
 	handsOOP = handsOOP[0:constants.HandsToKeepFromRange]
 	handsIP = handsIP[0:constants.HandsToKeepFromRange]
 
-	vanillaCFR := cfr.New()
-	strategyMap := cfr.NewStrategyMap()
+	vanillaCFR := poker.New()
+	strategyMap := poker.NewStrategyMap()
 	nIter := 100
 	expectedValue := float32(0.0)
 
