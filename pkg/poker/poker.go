@@ -410,7 +410,7 @@ func uniformDist(n int) []float64 {
 	return result
 }
 
-func (n *PokerNode) buildChildren(sm *StrategyMap) {
+func (n *PokerNode) buildChildren() {
 	if n.IsTerminal() {
 		n.children = nil
 		return
@@ -428,7 +428,7 @@ func (n *PokerNode) buildChildren(sm *StrategyMap) {
 		n.ReachPrSum = 0.0
 		n.probabilities = uniformDist(len(n.children)) // everywhere !!!
 		// push children onto the map !!!
-		sm.SetChildren(n.children)
+		// sm.SetChildren(n.children)
 
 	case h_P0Deal:
 		n.children = buildP1Deals(n)

@@ -106,16 +106,6 @@ func (sm *StrategyMap) SetChildren(nodes []PokerNode) {
 
 }
 
-func (sm *StrategyMap) GetChildren(key string) ([]PokerNode, bool) {
-	sm.mtx.Lock()
-	defer sm.mtx.Unlock()
-
-	_, ok := sm.SM[key]
-	if ok {
-		return
-	}
-}
-
 func (sm *StrategyMap) _GetNodeStrategy(history string, nbActions int, playerCard ranges.Hand, player int, node PokerNode) *NodeStrategy {
 	sm.mtx.Lock()
 	defer sm.mtx.Unlock()
