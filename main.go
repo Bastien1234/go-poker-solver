@@ -45,7 +45,7 @@ func main() {
 
 	vanillaCFR := poker.New()
 	strategyMap := poker.NewStrategyMap()
-	nIter := 100
+	nIter := 4000
 	expectedValue := float32(0.0)
 
 	for i := 0; i <= nIter; i++ {
