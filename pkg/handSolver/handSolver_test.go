@@ -106,4 +106,9 @@ func TestHandSolver2(t *testing.T) {
 	if quads1 != 814_100_000_000 {
 		t.Errorf("Problem with quads 1\nValue found : %v", quads1)
 	}
+
+	highCard := HandSolver2([]string{"Ah", "Kd", "Qc", "7s", "4h", "2s", "3d"}, true)
+	if highCard != 114131207043 {
+		t.Errorf("Error with high card\nValue found : %v\nExpected : 114131207043", highCard)
+	}
 }
